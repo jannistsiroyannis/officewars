@@ -50,6 +50,67 @@ static int islandIsComplete(unsigned* visited, unsigned nodeCount)
    return 1;
 }
 
+static Vec3 colorVec(char* color)
+{
+   // Color is allocated in server.c as: char color[8], and is expected on
+   // form #AA00EE
+
+   char comp[3] = {0};
+   comp[0] = color[1];
+   comp[1] = color[2];
+   unsigned x = strtol(comp, NULL, 16);
+   comp[0] = color[3];
+   comp[1] = color[4];
+   unsigned y = strtol(comp, NULL, 16);
+   comp[0] = color[5];
+   comp[1] = color[6];
+   unsigned z = strtol(comp, NULL, 16);
+
+   Vec3 c = {x,y,z};
+   return c;
+}
+
+static void ensureAcceptableColor(struct GameState* game, char* color)
+{
+   // A players colors must be distinct from other players colors, and must
+   // also not be too close to white or black (these colors are reserved for
+   // the game itself and neutral worlds).
+
+   Vec3 vChosenColor = colorVec(color);
+
+   unsigned hadToChange = 1;
+   while (hadToChange)
+   {
+      hadToChange = 0;
+
+      Vec3 white = {256, 256, 256};
+      Vec3 black = {0, 0, 0};
+      Vec3 randomColor = {rand()%256, rand()%256, rand()%256};
+
+      if (sqrt(V3SqrDist(white, vChosenColor)) < 20.0 || sqrt(V3SqrDist(black, vChosenColor)) < 20.0)
+      {
+	 vChosenColor = randomColor;
+	 hadToChange = 1;
+	 continue;
+      }
+      for (unsigned i = 0; i < game->playerCount; ++i)
+      {
+	 Vec3 vOtherPlayerColor = colorVec(game->playerColor[i]);
+	 if (sqrt(V3SqrDist(vOtherPlayerColor, vChosenColor)) < 20.0)
+	 {
+	    vChosenColor = randomColor;
+	    hadToChange = 1;
+	    break;
+	 }	 
+      }
+   }
+
+   snprintf(color, 8, "#%02x%02x%02x",
+	    (unsigned) vChosenColor.x,
+	    (unsigned) vChosenColor.y,
+	    (unsigned) vChosenColor.z);
+}
+
 static void connectIslands(struct GameState* state)
 {
    unsigned currentIsland[state->nodeCount];
@@ -237,7 +298,7 @@ void startGame(struct GameState* state)
    state->turn = calloc(state->turnCount, sizeof(state->turn[0]));
 }
 
-void addPlayer(struct GameState* game, const char* name, const char* color, const char* playerSecret)
+void addPlayer(struct GameState* game, const char* name, char* color, const char* playerSecret)
 {
    if (game->metaGameState != PREGAME)
       return;
@@ -250,6 +311,7 @@ void addPlayer(struct GameState* game, const char* name, const char* color, cons
    game->playerColor[game->playerCount-1] = malloc(8);
    game->playerSecret[game->playerCount-1] = malloc(7);
    strcpy(game->playerName[game->playerCount-1], name);
+   ensureAcceptableColor(game, color);
    strcpy(game->playerColor[game->playerCount-1], color);
    strcpy(game->playerSecret[game->playerCount-1], playerSecret);
 }
@@ -492,8 +554,6 @@ void serialize(struct GameState* state, unsigned forPlayer, FILE* f)
 	 }
 	 fprintf(f, "0\n"); // no visible orders this round
       }
-      else
-	 fprintf(f, "0\n"); // no turns now
    }
 
 }

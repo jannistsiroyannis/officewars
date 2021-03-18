@@ -71,7 +71,7 @@ struct GameState initatePreGame(const char* gameName);
 
 void startGame(struct GameState* state);
 
-void addPlayer(struct GameState* game, const char* name, const char* color, const char* playerSecret);
+void addPlayer(struct GameState* game, const char* name, char* color, const char* playerSecret);
 
 void addOrder(struct GameState* game, unsigned type, unsigned from, unsigned to, const char* playerSecret);
 
