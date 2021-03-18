@@ -161,7 +161,7 @@ void startGame(struct GameState* state)
    for (unsigned node = 0; node < state->nodeCount; ++node)
    {
       unsigned connectedCount = 0;
-      unsigned connectionsWanted = (rand() % 5) + 2;
+      unsigned connectionsWanted = (rand() % 5) + 4;
       getConnectedNodes(state, node, temp, &connectedCount);
       if (connectedCount >= connectionsWanted)
 	 continue;
