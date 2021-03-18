@@ -28,7 +28,7 @@ python3
 If they are: you should be able to run the run.sh script, which will build
 the game and start it in the temporary webserver.
 
-To deploy "for production", any CGI-compliant web server should do.
-(Only tested using Apache2)
+To deploy "for production", any CGI-compliant web server should do
+(only tested using Apache2).
 Said web server should serve the contents of the build directory, which is
 created upon execution of build.sh
