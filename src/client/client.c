@@ -216,7 +216,7 @@ EM_BOOL mouseUp(int eventType, const EmscriptenMouseEvent* mouseEvent, void* use
 	 if (playerSecret)
 	 {
 	    unsigned type = 0; // attack order
-	    if (mouseEvent->ctrlKey)
+	    if (mouseEvent->ctrlKey || mouseEvent->altKey || mouseEvent->shiftKey)
 	       type = 1; // support order
 	    snprintf(orders, 32, "%u\n%u\n%u\n%s\n%s\n", type, clientState.nodeFocus, selectedNode,
 		     clientState.state.id, playerSecret);
