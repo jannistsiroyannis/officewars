@@ -83,6 +83,8 @@ unsigned nodesConnect(struct GameState* state, unsigned a, unsigned b);
 
 void getConnectedNodes(struct GameState* state, unsigned a, unsigned* out, unsigned* outSize);
 
+unsigned getConnectedCount(struct GameState* state, unsigned a);
+
 void serialize(struct GameState* state, unsigned forPlayer, FILE* f);
 
 struct GameState deserialize(FILE* f);

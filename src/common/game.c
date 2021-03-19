@@ -6,6 +6,9 @@
 #include "math/vec.h"
 #include "game.h"
 
+static const unsigned MAXCONNECTIONS = 5;
+static const unsigned MINCONNECTIONS = 2;
+
 static void connectNodes(struct GameState* state, unsigned a, unsigned b)
 {
    state->adjacencyMatrix[a * state->nodeCount + b] = 1;
@@ -125,11 +128,11 @@ static void connectIslands(struct GameState* state)
       unsigned nearestNodes[4];
       for (unsigned i = 0; i < state->nodeCount; ++i)
       {
-	 if (currentIsland[i])
+	 if (currentIsland[i] && getConnectedCount(state, i) < MAXCONNECTIONS)
 	 {
 	    for (unsigned j = 0; j < state->nodeCount; ++j)
 	    {
-	       if (!currentIsland[j])
+	       if (!currentIsland[j] && getConnectedCount(state, j) < MAXCONNECTIONS)
 	       {
 		  float dist = V3SqrDist(V4toV3(state->nodeSpacePositions[i]), V4toV3(state->nodeSpacePositions[j]));
 		  if (dist < shortestDist[0])
@@ -158,9 +161,61 @@ static void connectIslands(struct GameState* state)
    }
 }
 
+static unsigned topologicalDistance(struct GameState* state, unsigned a, unsigned b)
+{
+   // Do BFS for shortest distance between a and b
+   unsigned queue[state->nodeCount];
+   unsigned visited[state->nodeCount];
+   memset(visited, 0, sizeof(visited[0]) * state->nodeCount);
+   unsigned head = 0, tail = 0, depth = 1, remainingAtDepth = 1;
+
+   // For getConnected
+   unsigned connected[state->nodeCount];
+   unsigned connectedCount = 0;
+   
+   queue[head++] = a;
+   visited[a] = 1;
+   while (head != tail)
+   {
+      // Get a node from queue
+      unsigned node = queue[tail];
+      if (++tail == state->nodeCount) tail = 0;
+
+      // If we're at target, we're done
+      if (node == b)
+      {
+	 return depth;
+      }
+      
+      // Put all not already visited connections in the queue
+      getConnectedNodes(state, node, connected, &connectedCount);
+      for (unsigned i = 0; i < connectedCount; ++i)
+      {
+	 if (visited[connected[i]])
+	    continue;
+	 visited[connected[i]] = 1;
+	 
+	 queue[head] = connected[i];
+	 if (++head == state->nodeCount) head = 0;
+      }
+
+      if (--remainingAtDepth == 0)
+      {
+	 ++depth;
+	 if (head > tail)
+	    remainingAtDepth = head - tail;
+	 else
+	    remainingAtDepth = head + state->nodeCount - tail;
+      }
+   }
+
+   // Should never be reached, unless the graph is disjoint (which is not allowed)
+   return -1;
+}
+
 void startGame(struct GameState* state)
 {
-   state->nodeCount = 7 * state->playerCount;
+   state->nodeCount = 4 * state->playerCount;
    state->metaGameState = INGAME;
    state->adjacencyMatrix = calloc(sizeof(*(state->adjacencyMatrix)),
 				   (state->nodeCount * state->nodeCount));
@@ -172,6 +227,7 @@ void startGame(struct GameState* state)
    state->homeWorld = calloc(sizeof(*(state->homeWorld)), state->nodeCount);
 
    // Random out player home worlds with clusters
+   /*
    {
       unsigned node = 0;
       for (unsigned player = 0; player < state->playerCount; ++player)
@@ -204,9 +260,10 @@ void startGame(struct GameState* state)
 	 }
       }
    }
+   */
    
-   // Random out the remaining nodes
-   for (unsigned node = state->playerCount * 4; node < state->nodeCount; ++node)
+   // Random out the nodes
+   for (unsigned node = 0; node < state->nodeCount; ++node)
    {
       state->nodeSpacePositions[node].x = ((float) (rand() % 1000) - 500.0) / 500.0;
       state->nodeSpacePositions[node].y = ((float) (rand() % 1000) - 500.0) / 500.0;
@@ -218,17 +275,11 @@ void startGame(struct GameState* state)
    }
 
    // Connect the nodes
-   unsigned temp[state->nodeCount];
    for (unsigned node = 0; node < state->nodeCount; ++node)
    {
-      unsigned connectedCount = 0;
-      unsigned connectionsWanted = (rand() % 5) + 4;
-      getConnectedNodes(state, node, temp, &connectedCount);
-      if (connectedCount >= connectionsWanted)
-	 continue;
-      unsigned connectionsNeeded = connectionsWanted - connectedCount;
+      unsigned connectionsWanted = (rand() % (MAXCONNECTIONS - MINCONNECTIONS + 1)) + MINCONNECTIONS;
       
-      while (connectedCount < connectionsNeeded)
+      while (getConnectedCount(state, node) < connectionsWanted)
       {
 	 unsigned nearestNode = 0;
 	 float nearestDistance = 9999999.0;
@@ -238,19 +289,55 @@ void startGame(struct GameState* state)
 					     V4toV3(state->nodeSpacePositions[candidate])));
 	    
 	    if (!nodesConnect(state, node, candidate) &&
-		distance < nearestDistance)
+		distance < nearestDistance &&
+		node != candidate &&
+		getConnectedCount(state, candidate) < MAXCONNECTIONS)
 	    {
 	       nearestNode = candidate;
 	       nearestDistance = distance;
 	    }
 	 }
 	 connectNodes(state, node, nearestNode);
-	 ++connectedCount;
       }
    }
 
    // Walk the walk, islands are not allowed
    connectIslands(state);
+
+   // Find pairs of nodes that are extremely far apart (in topology)
+   // and connect them. This should balance the problem of "chain/highway galaxies"
+   for (unsigned iterations = 0; iterations < 2 + state->playerCount / 2; ++iterations)
+   {
+      unsigned farthestNode[2] = {0};
+      unsigned farthestDistance = -1;
+      for (unsigned node = 0; node < state->nodeCount; ++node)
+      {
+	 for (unsigned candidate = 0; candidate < state->nodeCount; ++candidate)
+	 {
+	    // fix order for efficency!
+	    unsigned distance = topologicalDistance(state, node, candidate);
+	    if (!nodesConnect(state, node, candidate) &&
+		distance < farthestDistance &&
+		node != candidate &&
+		getConnectedCount(state, candidate) < MAXCONNECTIONS)
+	    {
+	       farthestNode[0] = node;
+	       farthestNode[1] = candidate;
+	       farthestDistance = distance;
+	    }
+	 }
+      }
+      connectNodes(state, farthestNode[0], farthestNode[1]);
+   }
+
+   // Random out player start positions
+   for (unsigned player = 0; player < state->playerCount; ++player)
+   {
+      unsigned node = rand() % state->nodeCount;
+      state->controlledByInitial[node] = player;
+      state->occupiedInitial[node] = 1;
+      state->homeWorld[node] = player;
+   }
 
    // Do some passes of atract/repulse to make the graph easier on the human eye
    for (unsigned iterations = 0; iterations < 100; ++iterations)
@@ -425,9 +512,21 @@ void getConnectedNodes(struct GameState* state, unsigned a, unsigned* out, unsig
    *outSize = 0;
    for (unsigned i = 0; i < state->nodeCount; ++i)
    {
-      if ( *(nodeRow + i) )
+      if (nodeRow[i])
 	 out[(*outSize)++] = i;
    }
+}
+
+unsigned getConnectedCount(struct GameState* state, unsigned a)
+{
+   unsigned* nodeRow = & (state->adjacencyMatrix[a * state->nodeCount]);
+   unsigned count = 0;
+   for (unsigned i = 0; i < state->nodeCount; ++i)
+   {
+      if (nodeRow[i])
+	 ++count;
+   }
+   return count;
 }
 
 /*
