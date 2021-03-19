@@ -32,3 +32,17 @@ To deploy "for production", any CGI-compliant web server should do
 (only tested using Apache2).
 Said web server should serve the contents of the build directory, which is
 created upon execution of build.sh
+
+# Using docker
+
+To simplify building and running you may use Docker and Docker Compose. There are two containers. One is for building the binary and one is for running the server.
+
+First build the server and client:
+```
+docker-compose run build
+```
+
+Then start the cgi server:
+```
+docker-compose up serve
+```
