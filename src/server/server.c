@@ -7,6 +7,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <errno.h>
 
 #include "../common/game.h"
 #include "../common/turnresolution.h"
@@ -68,6 +69,7 @@ static void createNewGameFile(const char* gameName)
    {
       generateKey(id);  
       gameFile = fopen(id, "wx");
+      if (!gameFile && errno != EEXIST) exitWithError(500);
    }
 
    struct GameState game = initatePreGame(gameName);
@@ -213,9 +215,9 @@ int main (int argc, char** argv)
    // Create games directory if not already done, and cd to it
    struct stat st = {0};
    if (stat("./games", &st) == -1) {
-      mkdir("./games", 0755);
+      if (mkdir("./games", 0755) != 0) exitWithError(500);
    }
-   chdir("./games");
+   if (chdir("./games") != 0) exitWithError(500);
 
    if (argc == 2 && !strcmp(argv[1], "tick"))
    {
