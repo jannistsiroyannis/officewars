@@ -223,6 +223,14 @@ int main (int argc, char** argv)
       return 0;
    }
 
+   if (argc == 3 && !strcmp(argv[1], "tick"))
+   {
+      struct GameState game = loadGame(argv[2]);
+      tickGame(&game);
+      saveAndCloseGame(&game, argv[2]);
+      return 0;
+   }
+
    srand(time(NULL));
 
    // For dev/debug, add "random action AI".
