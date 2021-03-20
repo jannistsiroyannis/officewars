@@ -167,7 +167,7 @@ static unsigned topologicalDistance(struct GameState* state, unsigned a, unsigne
    unsigned queue[state->nodeCount];
    unsigned visited[state->nodeCount];
    memset(visited, 0, sizeof(visited[0]) * state->nodeCount);
-   unsigned head = 0, tail = 0, depth = 1, remainingAtDepth = 1;
+   unsigned head = 0, tail = 0, depth = 0, remainingAtDepth = 1;
 
    // For getConnected
    unsigned connected[state->nodeCount];
@@ -213,6 +213,61 @@ static unsigned topologicalDistance(struct GameState* state, unsigned a, unsigne
    return -1;
 }
 
+static unsigned occupiedSystemWithin(struct GameState* state, unsigned a, unsigned within)
+{
+   unsigned queue[state->nodeCount];
+   unsigned visited[state->nodeCount];
+   memset(visited, 0, sizeof(visited[0]) * state->nodeCount);
+   unsigned head = 0, tail = 0, depth = 0, remainingAtDepth = 1;
+
+   // For getConnected
+   unsigned connected[state->nodeCount];
+   unsigned connectedCount = 0;
+   
+   queue[head++] = a;
+   visited[a] = 1;
+   while (head != tail)
+   {
+      // Get a node from queue
+      unsigned node = queue[tail];
+      if (++tail == state->nodeCount) tail = 0;
+
+      // If there's a player here,  we're done
+      if (state->occupiedInitial[node] && node != a)
+      {
+	 return 1;
+      }
+      
+      // Put all not already visited connections in the queue
+      getConnectedNodes(state, node, connected, &connectedCount);
+      for (unsigned i = 0; i < connectedCount; ++i)
+      {
+	 if (visited[connected[i]])
+	    continue;
+	 visited[connected[i]] = 1;
+	 queue[head] = connected[i];
+	 if (++head == state->nodeCount) head = 0;
+      }
+
+      if (--remainingAtDepth == 0)
+      {
+	 ++depth;
+
+	 if (depth > within)
+	 {
+	    return 0;
+	 }
+	 
+	 if (head > tail)
+	    remainingAtDepth = head - tail;
+	 else
+	    remainingAtDepth = head + state->nodeCount - tail;
+      }
+   }
+
+   return 0;
+}
+
 void startGame(struct GameState* state)
 {
    state->nodeCount = 4 * state->playerCount;
@@ -225,42 +280,6 @@ void startGame(struct GameState* state)
    state->occupied = calloc(sizeof(*(state->occupied)), state->nodeCount);
    state->occupiedInitial = calloc(sizeof(*(state->occupiedInitial)), state->nodeCount);
    state->homeWorld = calloc(sizeof(*(state->homeWorld)), state->nodeCount);
-
-   // Random out player home worlds with clusters
-   /*
-   {
-      unsigned node = 0;
-      for (unsigned player = 0; player < state->playerCount; ++player)
-      {
-	 state->nodeSpacePositions[node].x = ((float) (rand() % 1000) - 500.0) / 500.0;
-	 state->nodeSpacePositions[node].y = ((float) (rand() % 1000) - 500.0) / 500.0;
-	 state->nodeSpacePositions[node].z = 0.1 * ((float) (rand() % 1000) - 500.0) / 500.0; // Keep the galaxy flat-ish. If it's too "deep" it gets confusing.
-	 state->nodeSpacePositions[node].w = 1.0;
-
-	 state->controlledByInitial[node] = player;
-	 state->homeWorld[node] = player;
-	 state->occupiedInitial[node] = 1;
-
-	 unsigned homeNode = node;
-	 Vec3 homePos = V4toV3(state->nodeSpacePositions[node]);
-
-	 ++node;
-
-	 // Add reasonable controlled clusters around home worlds
-	 for (unsigned i = 0; i < 3; ++i)
-	 {
-	    Vec3 r = {rand(), rand(), rand()};
-	    r = V3Normalized(r);
-	    state->nodeSpacePositions[node] = V3toV4(V3Add(homePos, V3ScalarMult(0.001, r)));
-	    state->controlledByInitial[node] = player;
-	    state->occupiedInitial[node] = 1;
-	    state->homeWorld[node] = -1;
-	    connectNodes(state, node, homeNode);
-	    ++node;
-	 }
-      }
-   }
-   */
    
    // Random out the nodes
    for (unsigned node = 0; node < state->nodeCount; ++node)
@@ -334,6 +353,25 @@ void startGame(struct GameState* state)
    for (unsigned player = 0; player < state->playerCount; ++player)
    {
       unsigned node = rand() % state->nodeCount;
+      unsigned positionIsOk = 0;
+
+      unsigned tries = 0;
+      while (!positionIsOk)
+      {
+	 ++tries;
+	 if (tries > 200)
+	 {
+	    fprintf(stderr, "Gave up on player spacing! Throwing away the whole damned galaxy!\n");
+	    //freeGameState(state);
+	    startGame(state);
+	    return;
+	 }
+	 node = rand() % state->nodeCount;
+	 
+	 // Make sure there's no other player too close
+	 positionIsOk = !occupiedSystemWithin(state, node, 1) && !state->occupiedInitial[node];
+      }
+      
       state->controlledByInitial[node] = player;
       state->occupiedInitial[node] = 1;
       state->homeWorld[node] = player;
