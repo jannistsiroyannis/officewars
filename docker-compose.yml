@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  build:
+    image: emscripten/emsdk
+    user: "1001:1001"
+    volumes:
+      - .:/exec
+    working_dir: /exec
+    entrypoint: ["sh", "./build.sh"]
+  serve:
+    image: python:3.9.2
+    user: "1001:1001"
+    volumes:
+      - .:/exec
+    ports:
+      - "8000:8000"
+    working_dir: /exec
+    entrypoint: ["sh", "./run.sh"]
