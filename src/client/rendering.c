@@ -72,9 +72,9 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	 var canvas = document.getElementById("canv");
 	 var context = canvas.getContext("2d");   
 	 var nodes = Module.HEAPF32.subarray($1/4, $1/4 + $0*3); // Float-array, xyz interleaved
-	 var occupied = Module.HEAPU32.subarray($3/4, $3/4 + $0);
+	 //var occupied = Module.HEAPU32.subarray($3/4, $3/4 + $0);
 	 var controlledBy = Module.HEAPU32.subarray($4/4, $4/4 + $0);
-	 var homeWorld = Module.HEAPU32.subarray($9/4, $9/4 + $0);
+	 //var homeWorld = Module.HEAPU32.subarray($9/4, $9/4 + $0);
 
 	 var playerCount = $6;
 	 var playerNames = Module.HEAPU32.subarray($7/4, $7/4 + $6); // array of player name char*
@@ -82,7 +82,7 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	 
 	 context.beginPath();
 	 context.clearRect(0, 0, canvas.width, canvas.height);
-	 context.font = "10px mono";
+	 context.font = "12px mono";
 	 
 	 var node;
 	 for (node = 0; node < $0; node++)
@@ -136,6 +136,7 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 
 	    var perspectiveRadius = 5.0 / (z1 / 10000.0);
 
+            /*
 	    context.fillStyle = "black";
 	    if (node >= starNames.length)
 	    {
@@ -144,7 +145,7 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	    else
 	    {
 	       context.fillText(starNames[node], nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]-5-perspectiveRadius);
-	    }
+               }*/
 
 	    if (node == $5) // View focus
 	    {
@@ -166,19 +167,7 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	       var controllingColor = UTF8ToString(playerColors[controlledBy[node]]); 
 	       context.strokeStyle = controllingColor;
 	       context.fillStyle = controllingColor;
-
-	       if (homeWorld[node] == controlledBy[node])
-	       {
-		  context.fillText(controllingName, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+5+perspectiveRadius);
-	       }
-
-	       if (occupied[node])
-	       {
-		  context.beginPath();
-		  context.fillStyle = "black";
-		  context.fillRect(nodes[node*3+0]-(perspectiveRadius+7), nodes[node*3+1]-(perspectiveRadius+7), 7, 7);
-		  context.stroke();
-	       }
+               context.fillText("(" + node + ") " + controllingName, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+5+perspectiveRadius);
 	       context.fillStyle = controllingColor;
 	    }
 	    else
@@ -256,13 +245,13 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
       nodeCount, // $0
       (float*) transformed, // $1
       clientState.edgeBuffer, // $2
-      clientState.state.occupied, // $3
+      0, //clientState.state.occupied, // $3
       clientState.state.controlledBy, // $4
       nodeFocus, // $5
       clientState.state.playerCount, // $6
       clientState.state.playerName, // $7
       clientState.state.playerColor, // $8
-      clientState.state.homeWorld, // $9
+      0, //clientState.state.homeWorld, // $9
       clientState.state.turn[clientState.viewingTurn].orderCount, // $10
       clientState.state.turn[clientState.viewingTurn].issuingPlayer, // $11
       clientState.state.turn[clientState.viewingTurn].fromNode, // $12

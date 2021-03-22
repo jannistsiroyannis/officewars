@@ -29,16 +29,9 @@ struct GameState
    // Edges of the graph
    unsigned* adjacencyMatrix;
 
-   // Is there a fleet at each node?
-   unsigned* occupied; // not serialized, derived from turn data
-   unsigned* occupiedInitial;
-
    // ID of player controlling each node
    unsigned* controlledBy; // not serialized, derived from turn data
    unsigned* controlledByInitial;
-
-   // Which node is the "home" of each player (where fleets spawn and ambitions die)
-   unsigned* homeWorld;
 
    // 3d positions of the nodes in the graph
    Vec4* nodeSpacePositions;

@@ -44,22 +44,22 @@ static void receiveGames(const char* data, unsigned size)
       {
 	 case PREGAME:
 	 {
-	    	    fprintf(htmlF, " \
+            fprintf(htmlF, " \
 <div style=\"padding: 1em;\"> \
   <b>Open to join: </b>%s<br/><b>%u</b> players have joined<br/>", game.gameName, game.playerCount);
 
-		    char* token = getCookie(game.id);
-		    if (!token)
-		    {
-		       fprintf(htmlF, "<button \
+            char* token = getCookie(game.id);
+            if (!token)
+            {
+               fprintf(htmlF, "<button \
     type=\"button\" \
     onClick=\"_receiveButtonClick(allocate(intArrayFromString('registerfor %s'), ALLOC_NORMAL))\">\
       Join game \
   </button>", game.id);
-		    }
-		    else
-		       free(token);
-		    fprintf(htmlF, "<button \
+            }
+            else
+               free(token);
+            fprintf(htmlF, "<button \
     type=\"button\" \
     onClick=\"_receiveButtonClick(allocate(intArrayFromString('start %s'), ALLOC_NORMAL))\">\
       Start game \
@@ -119,9 +119,10 @@ static void focusHomeWorld()
 	    // i is 'our' player id!
 	    for (unsigned node = 0; node < clientState.state.nodeCount; ++node)
 	    {
-	       if (clientState.state.homeWorld[node] == i)
+	       if (clientState.state.controlledBy[node] == i)
 	       {
 		  clientState.nodeFocus = node;
+                  break;
 	       }
 	    }
 	 }
@@ -218,10 +219,10 @@ void receiveButtonClick(char* value)
    {
       // TODO: USE EM_JS instead. To avoid dangerous coercing to int
       char* gameName = (char*) EM_ASM_INT(
-      {
-	 var gameNameInput = document.getElementById("gameNameInput");
-	 return allocate(intArrayFromString(gameNameInput.value), ALLOC_NORMAL);
-      });
+         {
+            var gameNameInput = document.getElementById("gameNameInput");
+            return allocate(intArrayFromString(gameNameInput.value), ALLOC_NORMAL);
+         });
       makeAjaxRequest("/cgi-bin/server/games", "POST", gameName, receiveGames);
       free(gameName);
    }
@@ -253,41 +254,41 @@ void receiveButtonClick(char* value)
    else if (!strncmp(value, "historyn", strlen("historyn")))
    {
       clientState.viewingTurn = EM_ASM_INT(
-      {
-	 var element = document.getElementById("turnInput");
-	 var value = parseInt(element.value) + 1;
-	 if (value <= $0)
-	    element.value = value;
-	 else
-	    element.value = $0;
-	 return element.value;
-      }, clientState.state.turnCount-1);
+         {
+            var element = document.getElementById("turnInput");
+            var value = parseInt(element.value) + 1;
+            if (value <= $0)
+               element.value = value;
+            else
+               element.value = $0;
+            return element.value;
+         }, clientState.state.turnCount-1);
 
       stepGameHistory(&clientState.state, clientState.viewingTurn);
    }
    else if (!strncmp(value, "historyp", strlen("historyp")))
    {
       clientState.viewingTurn = EM_ASM_INT(
-      {
-	 var element = document.getElementById("turnInput");
-	 var value = parseInt(element.value) - 1;
-	 if (value > -1)
-	    element.value = value;
-	 else
-	    element.value = 0;
-	 return element.value;
-      });
+         {
+            var element = document.getElementById("turnInput");
+            var value = parseInt(element.value) - 1;
+            if (value > -1)
+               element.value = value;
+            else
+               element.value = 0;
+            return element.value;
+         });
 
       stepGameHistory(&clientState.state, clientState.viewingTurn);
    }
    else if (!strncmp(value, "historyl", strlen("historyl")))
    {
       clientState.viewingTurn = EM_ASM_INT(
-      {
-	 var element = document.getElementById("turnInput");
-	 element.value = $0;
-	 return element.value;
-      }, clientState.state.turnCount-1);
+         {
+            var element = document.getElementById("turnInput");
+            element.value = $0;
+            return element.value;
+         }, clientState.state.turnCount-1);
 
       stepGameHistory(&clientState.state, clientState.viewingTurn);
    }
@@ -342,59 +343,59 @@ void gotoState(enum StateTarget target, const char* parameter)
    else if (target == GAME_CREATION)
    {
       EM_ASM(
-      {
-	 var controlArea = document.getElementById("control");
+         {
+            var controlArea = document.getElementById("control");
 	 
-	 controlArea.innerHTML = " \
+            controlArea.innerHTML = " \
 <input type=\"text\" id=\"gameNameInput\"></input> \
 <button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('createdone'), ALLOC_NORMAL))\">Create new game</button>";
-      });
+         });
    }
    else if (target == START_CONFIRM)
    {
       EM_ASM(
-      {
-	 var controlArea = document.getElementById("control");
+         {
+            var controlArea = document.getElementById("control");
 	 
-	 controlArea.innerHTML = "\
+            controlArea.innerHTML = "\
 Please confirm game start. Once the game has started, new players will no longer be able to join.<br/> \
 <button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('startconfirm "+ UTF8ToString($0) +"'), ALLOC_NORMAL))\">Confirm</button>\
 <button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Cancel</button>";
-      }, parameter);
+         }, parameter);
    }
    else if (target == REGISTER_FOR)
    {
       EM_ASM(
-      {
-	 var controlArea = document.getElementById("control");
-	 var n = "0123456789ABCDEF";
-	 var colorPreset = "#";// + (Math.random()*0xFFFFFF).toString(16);
-	 for (var i = 0; i < 6; i++)
-	 {
-	    colorPreset += n[Math.floor(Math.random() * 16)];
-	 }
+         {
+            var controlArea = document.getElementById("control");
+            var n = "0123456789ABCDEF";
+            var colorPreset = "#";// + (Math.random()*0xFFFFFF).toString(16);
+            for (var i = 0; i < 6; i++)
+            {
+               colorPreset += n[Math.floor(Math.random() * 16)];
+            }
 	 
-	 controlArea.innerHTML = "\
+            controlArea.innerHTML = "\
 Please enter a name and choose a color to join the game.<br/> \
 <input type=\"text\" id=\"playerName\" name=\"name\"/><label for\"name\">Name</label> <br/>\
 <input type=\"color\" id=\"playerColor\" name=\"color\" value=\""+colorPreset+"\"/><label for\"color\">Color</label> <br/> \
 <button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('registerconfirm "+ UTF8ToString($0) +" ' + document.getElementById('playerColor').value + ' ' + document.getElementById('playerName').value ), ALLOC_NORMAL))\">Join</button>\
 <button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Cancel</button>";
-      }, parameter);
+         }, parameter);
    }
    else if (target == SECRET_DISPLAY)
    {
       EM_ASM(
-      {
-	 var controlArea = document.getElementById("control");
-	 var parts = UTF8ToString($0).split("\n");
-	 var gameId = parts[0];
-	 var secret = parts[1];
-	 document.cookie = gameId + "=" + secret + "; Max-Age=8640000; SameSite=Strict"; 
-	 controlArea.innerHTML = " \
+         {
+            var controlArea = document.getElementById("control");
+            var parts = UTF8ToString($0).split("\n");
+            var gameId = parts[0];
+            var secret = parts[1];
+            document.cookie = gameId + "=" + secret + "; Max-Age=8640000; SameSite=Strict"; 
+            controlArea.innerHTML = " \
 Your access token for this game is:<br/><br/><b>" + secret +"</b><br/><br/>\
 Please save it somewhere or write it down! If you clear you browser cookies, or want to player from another computer, you will need this token to get back into the game!<br/> \
 <button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Done</button>";
-      }, parameter);
+         }, parameter);
    }
 }

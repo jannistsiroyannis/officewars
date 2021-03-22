@@ -87,7 +87,7 @@ static int validateId(const char* id)
    for (int i = 0; i < 6; ++i)
    {
       if (id[i] < 65 || id[i] > 90) // A through Z
-	 return 0;
+         return 0;
    }
    return 1;
 }
@@ -123,12 +123,12 @@ static void tickAllGames()
    {
       while ((dir = readdir(d)) != NULL)
       {
-	 if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
-	 {
-	    struct GameState game = loadGame(dir->d_name);
-	    tickGame(&game);
-	    saveAndCloseGame(&game, dir->d_name);
-	 }
+         if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
+         {
+            struct GameState game = loadGame(dir->d_name);
+            tickGame(&game);
+            saveAndCloseGame(&game, dir->d_name);
+         }
       }
       closedir(d);
    }
@@ -143,20 +143,20 @@ static void addRandomAI()
    {
       while ((dir = readdir(d)) != NULL)
       {
-	 if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
-	 {
-	    struct GameState game = loadGame(dir->d_name);
+         if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
+         {
+            struct GameState game = loadGame(dir->d_name);
 
-	    char playerSecret[7] = {0};
-	    generateKey(playerSecret);
-	    char name[32] = {0};
-	    char color[8] = {0};
-	    snprintf(name, 31, "random%d", rand());
-	    snprintf(color, 8, "#%02x%02x%02x", rand()%256, rand()%256, rand()%256);
-	    addPlayer(&game, name, color, playerSecret);
+            char playerSecret[7] = {0};
+            generateKey(playerSecret);
+            char name[32] = {0};
+            char color[8] = {0};
+            snprintf(name, 31, "random%d", rand());
+            snprintf(color, 8, "#%02x%02x%02x", rand()%256, rand()%256, rand()%256);
+            addPlayer(&game, name, color, playerSecret);
 
-	    saveAndCloseGame(&game, dir->d_name);
-	 }
+            saveAndCloseGame(&game, dir->d_name);
+         }
       }
       closedir(d);
    }
@@ -171,37 +171,37 @@ static void moveRandomAI()
    {
       while ((dir = readdir(d)) != NULL)
       {
-	 if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
-	 {
-	    struct GameState game = loadGame(dir->d_name);
-	    stepGameHistoryLatest(&game);
+         if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
+         {
+            struct GameState game = loadGame(dir->d_name);
+            stepGameHistoryLatest(&game);
 
-	    for (unsigned node = 0; node < game.nodeCount; ++node)
-	    {
-	       unsigned playerId = game.controlledBy[node];
-	       if (playerId != 4294967295 && game.occupied[node])
-	       {
-		  const char* name = game.playerName[playerId];
-		  if (strncmp(name, "random", strlen("random")))
-		     continue;
+            for (unsigned node = 0; node < game.nodeCount; ++node)
+            {
+               unsigned playerId = game.controlledBy[node];
+               if (playerId != 4294967295)
+               {
+                  const char* name = game.playerName[playerId];
+                  if (strncmp(name, "random", strlen("random")))
+                     continue;
 		  
-		  char* secret = game.playerSecret[playerId];
+                  char* secret = game.playerSecret[playerId];
 
-		  unsigned connected[game.nodeCount];
-		  unsigned connectedCount = 0;
-		  getConnectedNodes(&game, node, connected, &connectedCount);
-		  unsigned randomTarget = connected[rand() % connectedCount];
+                  unsigned connected[game.nodeCount];
+                  unsigned connectedCount = 0;
+                  getConnectedNodes(&game, node, connected, &connectedCount);
+                  unsigned randomTarget = connected[rand() % connectedCount];
 
-		  unsigned type = 0;
+                  unsigned type = 0;
 
-		  //printf("Doing order from %u to %u by %u with secret %s\n", node, randomTarget, playerId, secret);
+                  //printf("Doing order from %u to %u by %u with secret %s\n", node, randomTarget, playerId, secret);
 		  
-		  addOrder(&game, type, node, randomTarget, secret);
-	       }
-	    }
+                  addOrder(&game, type, node, randomTarget, secret);
+               }
+            }
 	    
-	    saveAndCloseGame(&game, dir->d_name);
-	 }
+            saveAndCloseGame(&game, dir->d_name);
+         }
       }
       closedir(d);
    }
@@ -240,7 +240,7 @@ int main (int argc, char** argv)
    {
       int count = atoi(argv[2]);
       for (int i = 0; i < count; ++i)
-	 addRandomAI();
+         addRandomAI();
       return 0;
    }
    if (argc == 2 && !strcmp(argv[1], "randommove"))
@@ -270,7 +270,7 @@ int main (int argc, char** argv)
    {
       if (!strcmp(method, "POST"))
       {
-	 createNewGameFile(data);
+         createNewGameFile(data);
       }
 
       // Respond regardless of the method
@@ -283,12 +283,12 @@ int main (int argc, char** argv)
       d = opendir(".");
       if (d)
       {
-	 while ((dir = readdir(d)) != NULL)
-	 {
-	    if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
-	       ++gameCount;
-	 }
-	 closedir(d);
+         while ((dir = readdir(d)) != NULL)
+         {
+            if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
+               ++gameCount;
+         }
+         closedir(d);
       }
       printf("%u\n", gameCount); // number of games in list
 
@@ -296,16 +296,16 @@ int main (int argc, char** argv)
       d = opendir(".");
       if (d)
       {
-	 while ((dir = readdir(d)) != NULL)
-	 {
-	    if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
-	    {
-	       struct GameState game = loadGame(dir->d_name);
-	       serialize(&game, -2, stdout); // no secrets
-	       freeGameState(&game);
-	    }
-	 }
-	 closedir(d);
+         while ((dir = readdir(d)) != NULL)
+         {
+            if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
+            {
+               struct GameState game = loadGame(dir->d_name);
+               serialize(&game, -2, stdout); // no secrets
+               freeGameState(&game);
+            }
+         }
+         closedir(d);
       }
    }
    else if (!strncmp(path, "/state/", strlen("/state/")))
@@ -316,13 +316,13 @@ int main (int argc, char** argv)
       unsigned serializationFor = -2; // share no secrets
       if (validateId(playerSecret)) // If there's an authed player, let them see their own moves
       {
-	 for (unsigned i = 0; i < game.playerCount; ++i)
-	 {
-	    if (!strcmp(playerSecret, game.playerSecret[i]))
-	    {
-	       serializationFor = i;
-	    }
-	 }
+         for (unsigned i = 0; i < game.playerCount; ++i)
+         {
+            if (!strcmp(playerSecret, game.playerSecret[i]))
+            {
+               serializationFor = i;
+            }
+         }
       }
       
       printf("Content-Type: text/plain\n\n");
@@ -334,7 +334,7 @@ int main (int argc, char** argv)
       // Read input, like so: KWFEUF #0000ff Their Name
       FILE* f = fmemopen((void*)data, contentLength, "r");
       if (!f)
-	 return 0;
+         return 0;
       char gameId[7] = {0};
       fscanf(f, "%6s ", gameId);
       char color[8] = {0};
@@ -348,7 +348,7 @@ int main (int argc, char** argv)
       generateKey(playerSecret);
       struct GameState game = loadGame(gameId);
       if (strlen(name) < 2 || strlen(name) > 63)
-	 exitWithError(400);
+         exitWithError(400);
       addPlayer(&game, name, color, playerSecret);
       saveAndCloseGame(&game, gameId);
       printf("Content-Type: text/plain\n\n");
@@ -366,39 +366,39 @@ int main (int argc, char** argv)
    {
       if (!strcmp(method, "POST"))
       {
-	 FILE* f = fmemopen((void*)data, contentLength, "r");
-	 if (!f)
+         FILE* f = fmemopen((void*)data, contentLength, "r");
+         if (!f)
 	    return 0;
-	 unsigned type;
-	 unsigned from;
-	 unsigned to;
-	 char gameId[7] = {0};
-	 char playerSecret[7] = {0};
+         unsigned type;
+         unsigned from;
+         unsigned to;
+         char gameId[7] = {0};
+         char playerSecret[7] = {0};
 
-	 fscanf(f, "%u\n%u\n%u\n%6[^\n]\n%6[^\n]\n", &type, &from, &to, gameId, playerSecret);
+         fscanf(f, "%u\n%u\n%u\n%6[^\n]\n%6[^\n]\n", &type, &from, &to, gameId, playerSecret);
 	 
-	 if (!validateId(playerSecret))
-	 {
-	    fclose(f);
-	    exitWithError(400);
-	 }
-	 fclose(f);
+         if (!validateId(playerSecret))
+         {
+            fclose(f);
+            exitWithError(400);
+         }
+         fclose(f);
 
-	 // Open data file and add order
-	 struct GameState game = loadGame(gameId);
+         // Open data file and add order
+         struct GameState game = loadGame(gameId);
 
-	 stepGameHistoryLatest(&game);
+         stepGameHistoryLatest(&game);
 
-	 addOrder(&game, type, from, to, playerSecret);
+         addOrder(&game, type, from, to, playerSecret);
 
-	 unsigned playerId = game.controlledBy[from];
-	 if (strcmp(game.playerSecret[playerId], playerSecret))
-	     playerId = -2;
+         unsigned playerId = game.controlledBy[from];
+         if (strcmp(game.playerSecret[playerId], playerSecret))
+            playerId = -2;
 
-	 printf("Content-Type: text/plain\n\n");
-	 serialize(&game, playerId, stdout);
+         printf("Content-Type: text/plain\n\n");
+         serialize(&game, playerId, stdout);
 
-	 saveAndCloseGame(&game, gameId);
+         saveAndCloseGame(&game, gameId);
       }
    }
    else

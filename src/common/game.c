@@ -29,7 +29,7 @@ struct GameState initatePreGame(const char* gameName)
 static void findIsland(struct GameState* state, unsigned node, unsigned* visited)
 {
    if (visited[node])
-   return;
+      return;
    
    visited[node] = 1;
 
@@ -48,7 +48,7 @@ static int islandIsComplete(unsigned* visited, unsigned nodeCount)
    for (unsigned i = 0; i < nodeCount; ++i)
    {
       if (!visited[i])
-	 return 0;
+         return 0;
    }
    return 1;
 }
@@ -90,28 +90,28 @@ static void ensureAcceptableColor(struct GameState* game, char* color)
       Vec3 black = {0, 0, 0};
       Vec3 randomColor = {rand()%256, rand()%256, rand()%256};
 
-      if (sqrt(V3SqrDist(white, vChosenColor)) < 20.0 || sqrt(V3SqrDist(black, vChosenColor)) < 20.0)
+      if (sqrt(V3SqrDist(white, vChosenColor)) < 80.0 || sqrt(V3SqrDist(black, vChosenColor)) < 80.0)
       {
-	 vChosenColor = randomColor;
-	 hadToChange = 1;
-	 continue;
+         vChosenColor = randomColor;
+         hadToChange = 1;
+         continue;
       }
       for (unsigned i = 0; i < game->playerCount; ++i)
       {
-	 Vec3 vOtherPlayerColor = colorVec(game->playerColor[i]);
-	 if (sqrt(V3SqrDist(vOtherPlayerColor, vChosenColor)) < 20.0)
-	 {
-	    vChosenColor = randomColor;
-	    hadToChange = 1;
-	    break;
-	 }	 
+         Vec3 vOtherPlayerColor = colorVec(game->playerColor[i]);
+         if (sqrt(V3SqrDist(vOtherPlayerColor, vChosenColor)) < 80.0)
+         {
+            vChosenColor = randomColor;
+            hadToChange = 1;
+            break;
+         }	 
       }
    }
 
    snprintf(color, 8, "#%02x%02x%02x",
-	    (unsigned) vChosenColor.x,
-	    (unsigned) vChosenColor.y,
-	    (unsigned) vChosenColor.z);
+            (unsigned) vChosenColor.x,
+            (unsigned) vChosenColor.y,
+            (unsigned) vChosenColor.z);
 }
 
 static void connectIslands(struct GameState* state)
@@ -128,28 +128,28 @@ static void connectIslands(struct GameState* state)
       unsigned nearestNodes[4];
       for (unsigned i = 0; i < state->nodeCount; ++i)
       {
-	 if (currentIsland[i] && getConnectedCount(state, i) < MAXCONNECTIONS)
-	 {
-	    for (unsigned j = 0; j < state->nodeCount; ++j)
-	    {
-	       if (!currentIsland[j] && getConnectedCount(state, j) < MAXCONNECTIONS)
-	       {
-		  float dist = V3SqrDist(V4toV3(state->nodeSpacePositions[i]), V4toV3(state->nodeSpacePositions[j]));
-		  if (dist < shortestDist[0])
-		  {
-		     shortestDist[0] = dist;
-		     nearestNodes[0] = i;
-		     nearestNodes[1] = j;
-		  }
-		  else if (dist < shortestDist[1])
-		  {
-		     shortestDist[1] = dist;
-		     nearestNodes[2] = i;
-		     nearestNodes[3] = j;
-		  }
-	       }
-	    }
-	 }
+         if (currentIsland[i] && getConnectedCount(state, i) < MAXCONNECTIONS)
+         {
+            for (unsigned j = 0; j < state->nodeCount; ++j)
+            {
+               if (!currentIsland[j] && getConnectedCount(state, j) < MAXCONNECTIONS)
+               {
+                  float dist = V3SqrDist(V4toV3(state->nodeSpacePositions[i]), V4toV3(state->nodeSpacePositions[j]));
+                  if (dist < shortestDist[0])
+                  {
+                     shortestDist[0] = dist;
+                     nearestNodes[0] = i;
+                     nearestNodes[1] = j;
+                  }
+                  else if (dist < shortestDist[1])
+                  {
+                     shortestDist[1] = dist;
+                     nearestNodes[2] = i;
+                     nearestNodes[3] = j;
+                  }
+               }
+            }
+         }
       }
       
       connectNodes(state, nearestNodes[0], nearestNodes[1]);
@@ -184,27 +184,27 @@ static unsigned topologicalDistance(struct GameState* state, unsigned a, unsigne
       // If we're at target, we're done
       if (node == b)
       {
-	 return depth;
+         return depth;
       }
       
       // Put all not already visited connections in the queue
       getConnectedNodes(state, node, connected, &connectedCount);
       for (unsigned i = 0; i < connectedCount; ++i)
       {
-	 if (visited[connected[i]])
+         if (visited[connected[i]])
 	    continue;
-	 visited[connected[i]] = 1;
+         visited[connected[i]] = 1;
 	 
-	 queue[head] = connected[i];
-	 if (++head == state->nodeCount) head = 0;
+         queue[head] = connected[i];
+         if (++head == state->nodeCount) head = 0;
       }
 
       if (--remainingAtDepth == 0)
       {
-	 ++depth;
-	 if (head > tail)
+         ++depth;
+         if (head > tail)
 	    remainingAtDepth = head - tail;
-	 else
+         else
 	    remainingAtDepth = head + state->nodeCount - tail;
       }
    }
@@ -233,34 +233,34 @@ static unsigned occupiedSystemWithin(struct GameState* state, unsigned a, unsign
       if (++tail == state->nodeCount) tail = 0;
 
       // If there's a player here,  we're done
-      if (state->occupiedInitial[node] && node != a)
+      if (state->controlledByInitial[node] != -1 && node != a)
       {
-	 return 1;
+         return 1;
       }
       
       // Put all not already visited connections in the queue
       getConnectedNodes(state, node, connected, &connectedCount);
       for (unsigned i = 0; i < connectedCount; ++i)
       {
-	 if (visited[connected[i]])
+         if (visited[connected[i]])
 	    continue;
-	 visited[connected[i]] = 1;
-	 queue[head] = connected[i];
-	 if (++head == state->nodeCount) head = 0;
+         visited[connected[i]] = 1;
+         queue[head] = connected[i];
+         if (++head == state->nodeCount) head = 0;
       }
 
       if (--remainingAtDepth == 0)
       {
-	 ++depth;
+         ++depth;
 
-	 if (depth > within)
-	 {
-	    return 0;
-	 }
+         if (depth > within)
+         {
+            return 0;
+         }
 	 
-	 if (head > tail)
+         if (head > tail)
 	    remainingAtDepth = head - tail;
-	 else
+         else
 	    remainingAtDepth = head + state->nodeCount - tail;
       }
    }
@@ -273,13 +273,10 @@ void startGame(struct GameState* state)
    state->nodeCount = 4 * state->playerCount;
    state->metaGameState = INGAME;
    state->adjacencyMatrix = calloc(sizeof(*(state->adjacencyMatrix)),
-				   (state->nodeCount * state->nodeCount));
+                                   (state->nodeCount * state->nodeCount));
    state->controlledBy = calloc(sizeof(*(state->controlledBy)), state->nodeCount);
    state->controlledByInitial = calloc(sizeof(*(state->controlledByInitial)), state->nodeCount);
    state->nodeSpacePositions = calloc(sizeof(*(state->nodeSpacePositions)), state->nodeCount);
-   state->occupied = calloc(sizeof(*(state->occupied)), state->nodeCount);
-   state->occupiedInitial = calloc(sizeof(*(state->occupiedInitial)), state->nodeCount);
-   state->homeWorld = calloc(sizeof(*(state->homeWorld)), state->nodeCount);
    
    // Random out the nodes
    for (unsigned node = 0; node < state->nodeCount; ++node)
@@ -290,7 +287,6 @@ void startGame(struct GameState* state)
       state->nodeSpacePositions[node].w = 1.0;
 
       state->controlledByInitial[node] = -1;
-      state->homeWorld[node] = -1;
    }
 
    // Connect the nodes
@@ -300,23 +296,23 @@ void startGame(struct GameState* state)
       
       while (getConnectedCount(state, node) < connectionsWanted)
       {
-	 unsigned nearestNode = 0;
-	 float nearestDistance = 9999999.0;
-	 for (unsigned candidate = 0; candidate < state->nodeCount; ++candidate)
-	 {
-	    float distance = sqrt(V3SqrDist(V4toV3(state->nodeSpacePositions[node]),
-					     V4toV3(state->nodeSpacePositions[candidate])));
+         unsigned nearestNode = 0;
+         float nearestDistance = 9999999.0;
+         for (unsigned candidate = 0; candidate < state->nodeCount; ++candidate)
+         {
+            float distance = sqrt(V3SqrDist(V4toV3(state->nodeSpacePositions[node]),
+                                            V4toV3(state->nodeSpacePositions[candidate])));
 	    
-	    if (!nodesConnect(state, node, candidate) &&
-		distance < nearestDistance &&
-		node != candidate &&
-		getConnectedCount(state, candidate) < MAXCONNECTIONS)
-	    {
-	       nearestNode = candidate;
-	       nearestDistance = distance;
-	    }
-	 }
-	 connectNodes(state, node, nearestNode);
+            if (!nodesConnect(state, node, candidate) &&
+                distance < nearestDistance &&
+                node != candidate &&
+                getConnectedCount(state, candidate) < MAXCONNECTIONS)
+            {
+               nearestNode = candidate;
+               nearestDistance = distance;
+            }
+         }
+         connectNodes(state, node, nearestNode);
       }
    }
 
@@ -331,20 +327,20 @@ void startGame(struct GameState* state)
       unsigned farthestDistance = -1;
       for (unsigned node = 0; node < state->nodeCount; ++node)
       {
-	 for (unsigned candidate = 0; candidate < state->nodeCount; ++candidate)
-	 {
-	    // fix order for efficency!
-	    unsigned distance = topologicalDistance(state, node, candidate);
-	    if (!nodesConnect(state, node, candidate) &&
-		distance < farthestDistance &&
-		node != candidate &&
-		getConnectedCount(state, candidate) < MAXCONNECTIONS)
-	    {
-	       farthestNode[0] = node;
-	       farthestNode[1] = candidate;
-	       farthestDistance = distance;
-	    }
-	 }
+         for (unsigned candidate = 0; candidate < state->nodeCount; ++candidate)
+         {
+            // fix order for efficency!
+            unsigned distance = topologicalDistance(state, node, candidate);
+            if (!nodesConnect(state, node, candidate) &&
+                distance < farthestDistance &&
+                node != candidate &&
+                getConnectedCount(state, candidate) < MAXCONNECTIONS)
+            {
+               farthestNode[0] = node;
+               farthestNode[1] = candidate;
+               farthestDistance = distance;
+            }
+         }
       }
       connectNodes(state, farthestNode[0], farthestNode[1]);
    }
@@ -358,23 +354,21 @@ void startGame(struct GameState* state)
       unsigned tries = 0;
       while (!positionIsOk)
       {
-	 ++tries;
-	 if (tries > 200)
-	 {
-	    fprintf(stderr, "Gave up on player spacing! Throwing away the whole damned galaxy!\n");
-	    //freeGameState(state);
-	    startGame(state);
-	    return;
-	 }
-	 node = rand() % state->nodeCount;
+         ++tries;
+         if (tries > 200)
+         {
+            fprintf(stderr, "Gave up on player spacing! Throwing away the whole damned galaxy!\n");
+            //freeGameState(state);
+            startGame(state);
+            return;
+         }
+         node = rand() % state->nodeCount;
 	 
-	 // Make sure there's no other player too close
-	 positionIsOk = !occupiedSystemWithin(state, node, 1) && !state->occupiedInitial[node];
+         // Make sure there's no other player too close
+         positionIsOk = !occupiedSystemWithin(state, node, 1) && state->controlledByInitial[node] == -1;
       }
       
       state->controlledByInitial[node] = player;
-      state->occupiedInitial[node] = 1;
-      state->homeWorld[node] = player;
    }
 
    // Do some passes of atract/repulse to make the graph easier on the human eye
@@ -382,39 +376,39 @@ void startGame(struct GameState* state)
    {
       for (unsigned node = 0; node < state->nodeCount; ++node)
       {
-	 for (unsigned otherNode = 0; otherNode < state->nodeCount; ++otherNode)
-	 {
-	    Vec3 v3Node = V4toV3(state->nodeSpacePositions[node]);
-	    Vec3 v3OtherNode = V4toV3(state->nodeSpacePositions[otherNode]);
+         for (unsigned otherNode = 0; otherNode < state->nodeCount; ++otherNode)
+         {
+            Vec3 v3Node = V4toV3(state->nodeSpacePositions[node]);
+            Vec3 v3OtherNode = V4toV3(state->nodeSpacePositions[otherNode]);
 
-	    if (nodesConnect(state, node, otherNode))
-	    {
-	       // Atract
-	       if (V3Length(V3Subt(v3OtherNode, v3Node)) > 0.5)
-	       {
-		  Vec3 towardsOther = V3ScalarMult(0.2, V3Normalized(V3Subt(v3OtherNode, v3Node)));
-		  v3Node = V3Add(v3Node, towardsOther);
-	       }
-	       // (Repulse if TOO close)
-	       else if (V3Length(V3Subt(v3OtherNode, v3Node)) < 0.3)
-	       {
-		  Vec3 towardsOther = V3ScalarMult(-0.3, V3Normalized(V3Subt(v3OtherNode, v3Node)));
-		  v3Node = V3Add(v3Node, towardsOther);
-	       }
-	    }
-	    else
-	    {
-	       // Repulse
-	       if (V3Length(V3Subt(v3OtherNode, v3Node)) < 0.6)
-	       {
-		  Vec3 towardsOther = V3ScalarMult(-0.3, V3Normalized(V3Subt(v3OtherNode, v3Node)));
-		  v3Node = V3Add(v3Node, towardsOther);
-	       }
-	    }
+            if (nodesConnect(state, node, otherNode))
+            {
+               // Atract
+               if (V3Length(V3Subt(v3OtherNode, v3Node)) > 0.5)
+               {
+                  Vec3 towardsOther = V3ScalarMult(0.2, V3Normalized(V3Subt(v3OtherNode, v3Node)));
+                  v3Node = V3Add(v3Node, towardsOther);
+               }
+               // (Repulse if TOO close)
+               else if (V3Length(V3Subt(v3OtherNode, v3Node)) < 0.3)
+               {
+                  Vec3 towardsOther = V3ScalarMult(-0.3, V3Normalized(V3Subt(v3OtherNode, v3Node)));
+                  v3Node = V3Add(v3Node, towardsOther);
+               }
+            }
+            else
+            {
+               // Repulse
+               if (V3Length(V3Subt(v3OtherNode, v3Node)) < 0.6)
+               {
+                  Vec3 towardsOther = V3ScalarMult(-0.3, V3Normalized(V3Subt(v3OtherNode, v3Node)));
+                  v3Node = V3Add(v3Node, towardsOther);
+               }
+            }
 
-	    state->nodeSpacePositions[node] = V3toV4(v3Node);
-	    state->nodeSpacePositions[otherNode] = V3toV4(v3OtherNode);
-	 }
+            state->nodeSpacePositions[node] = V3toV4(v3Node);
+            state->nodeSpacePositions[otherNode] = V3toV4(v3OtherNode);
+         }
       }
    }
    
@@ -446,13 +440,7 @@ void addOrder(struct GameState* game, unsigned type, unsigned from, unsigned to,
    // Check that the player actually owns the "from" system
    unsigned playerId = game->controlledBy[from];
    if ( strcmp(game->playerSecret[playerId], playerSecret) ||
-	( !nodesConnect(game, from, to) && game->controlledBy[to] != playerId ) )
-   {
-      return;
-   }
-
-   // Check that there's actually a unit there
-   if (!game->occupied[from])
+        ( !nodesConnect(game, from, to) && game->controlledBy[to] != playerId ) )
    {
       return;
    }
@@ -464,13 +452,13 @@ void addOrder(struct GameState* game, unsigned type, unsigned from, unsigned to,
    {
       if (turn->fromNode[i] == from)
       {
-	 unsigned remaining = turn->orderCount - i - 1;
-	 memmove(&(turn->issuingPlayer[i]), &(turn->issuingPlayer[i+1]), remaining * sizeof(turn->issuingPlayer[0]));
-	 memmove(&(turn->fromNode[i]), &(turn->fromNode[i+1]), remaining * sizeof(turn->fromNode[0]));
-	 memmove(&(turn->toNode[i]), &(turn->toNode[i+1]), remaining * sizeof(turn->toNode[0]));
-	 memmove(&(turn->type[i]), &(turn->type[i+1]), remaining * sizeof(turn->type[0]));
-	 --(turn->orderCount);
-	 break;
+         unsigned remaining = turn->orderCount - i - 1;
+         memmove(&(turn->issuingPlayer[i]), &(turn->issuingPlayer[i+1]), remaining * sizeof(turn->issuingPlayer[0]));
+         memmove(&(turn->fromNode[i]), &(turn->fromNode[i+1]), remaining * sizeof(turn->fromNode[0]));
+         memmove(&(turn->toNode[i]), &(turn->toNode[i+1]), remaining * sizeof(turn->toNode[0]));
+         memmove(&(turn->type[i]), &(turn->type[i+1]), remaining * sizeof(turn->type[0]));
+         --(turn->orderCount);
+         break;
       }
    }
 
@@ -498,12 +486,6 @@ void freeGameState(struct GameState* state)
       free(state->controlledByInitial);
    if (state->nodeSpacePositions)
       free(state->nodeSpacePositions);
-   if (state->occupied)
-      free(state->occupied);
-   if (state->occupiedInitial)
-      free(state->occupiedInitial);
-   if (state->homeWorld)
-      free(state->homeWorld);
    if (state->gameName)
       free(state->gameName);
    for (unsigned i = 0; i < state->playerCount; ++i)
@@ -528,13 +510,13 @@ unsigned nodesConnect(struct GameState* state, unsigned a, unsigned b)
 
      the matrix might look something like:
 
-        0  1  2  3
-        ----------
+     0  1  2  3
+     ----------
      0 |0, 0, 1, 0
      1 |0, 0, 0, 1
      2 |1, 0, 0, 0
      3 |0, 1, 0, 0
-    */
+   */
 
    return state->adjacencyMatrix[a * state->nodeCount + b];
 }
@@ -543,7 +525,7 @@ unsigned nodesConnect(struct GameState* state, unsigned a, unsigned b)
   Fills the 'out' array with all nodes connected to 'a'.
   'out' should be nodeCount in size.
   'outSize' tells the caller how many nodes are actually in the 'out' list
- */
+*/
 void getConnectedNodes(struct GameState* state, unsigned a, unsigned* out, unsigned* outSize)
 {
    unsigned* nodeRow = & (state->adjacencyMatrix[a * state->nodeCount]);
@@ -551,7 +533,7 @@ void getConnectedNodes(struct GameState* state, unsigned a, unsigned* out, unsig
    for (unsigned i = 0; i < state->nodeCount; ++i)
    {
       if (nodeRow[i])
-	 out[(*outSize)++] = i;
+         out[(*outSize)++] = i;
    }
 }
 
@@ -562,7 +544,7 @@ unsigned getConnectedCount(struct GameState* state, unsigned a)
    for (unsigned i = 0; i < state->nodeCount; ++i)
    {
       if (nodeRow[i])
-	 ++count;
+         ++count;
    }
    return count;
 }
@@ -575,7 +557,7 @@ unsigned getConnectedCount(struct GameState* state, unsigned a)
   only serialize what that player should be allowed to know.
 
   Deserialization must be unaffected by this.
- */
+*/
 void serialize(struct GameState* state, unsigned forPlayer, FILE* f)
 {
    fprintf(f, "%s\n", state->id);
@@ -587,9 +569,9 @@ void serialize(struct GameState* state, unsigned forPlayer, FILE* f)
       fprintf(f, "%s\n", state->playerName[i]);
       fprintf(f, "%s\n", state->playerColor[i]);
       if (forPlayer == -1 || forPlayer == i)
-	fprintf(f, "%s\n", state->playerSecret[i]);
+         fprintf(f, "%s\n", state->playerSecret[i]);
       else
-	fprintf(f, "REDACT\n");
+         fprintf(f, "REDACT\n");
    }
    
    fprintf(f, "%u\n", state->nodeCount);
@@ -597,7 +579,7 @@ void serialize(struct GameState* state, unsigned forPlayer, FILE* f)
    {
       for (unsigned j = 0; j < state->nodeCount; ++j)
       {
-	 fprintf(f, "%u", state->adjacencyMatrix[i*(state->nodeCount)+j]);
+         fprintf(f, "%u", state->adjacencyMatrix[i*(state->nodeCount)+j]);
       }
       fprintf(f, "\n");
    }
@@ -607,21 +589,13 @@ void serialize(struct GameState* state, unsigned forPlayer, FILE* f)
 	      state->nodeSpacePositions[i].x,
 	      state->nodeSpacePositions[i].y,
 	      state->nodeSpacePositions[i].z
-	 ); // w not necessary, always 1.0
+         ); // w not necessary, always 1.0
    }
    for (unsigned i = 0; i < state->nodeCount; ++i)
    {
       fprintf(f, "%u\n", state->controlledByInitial[i]);
    }
-   for (unsigned i = 0; i < state->nodeCount; ++i)
-   {
-      fprintf(f, "%u\n", state->occupiedInitial[i]);
-   }
-   for (unsigned i = 0; i < state->nodeCount; ++i)
-   {
-      fprintf(f, "%u\n", state->homeWorld[i]);
-   }
-
+   
    fprintf(f, "%u\n", state->turnCount);
 
    // Careful here, on the last (current) turn, return only the players own orders!!
@@ -629,14 +603,14 @@ void serialize(struct GameState* state, unsigned forPlayer, FILE* f)
    {
       for (unsigned i = 0; i < state->turnCount; ++i)
       {
-	 fprintf(f, "%u\n", state->turn[i].orderCount);
-	 for (unsigned j = 0; j < state->turn[i].orderCount; ++j)
-	 {
-	    fprintf(f, "%u\n", state->turn[i].issuingPlayer[j]);
-	    fprintf(f, "%u\n", state->turn[i].fromNode[j]);
-	    fprintf(f, "%u\n", state->turn[i].toNode[j]);
-	    fprintf(f, "%u\n", state->turn[i].type[j]);
-	 }
+         fprintf(f, "%u\n", state->turn[i].orderCount);
+         for (unsigned j = 0; j < state->turn[i].orderCount; ++j)
+         {
+            fprintf(f, "%u\n", state->turn[i].issuingPlayer[j]);
+            fprintf(f, "%u\n", state->turn[i].fromNode[j]);
+            fprintf(f, "%u\n", state->turn[i].toNode[j]);
+            fprintf(f, "%u\n", state->turn[i].type[j]);
+         }
       }
    }
    else if (forPlayer != -2)// Only forPlayers pending orders
@@ -644,33 +618,33 @@ void serialize(struct GameState* state, unsigned forPlayer, FILE* f)
       // All historic turns
       for (unsigned i = 0; i < state->turnCount-1; ++i)
       {
-	 fprintf(f, "%u\n", state->turn[i].orderCount);
-	 for (unsigned j = 0; j < state->turn[i].orderCount; ++j)
-	 {
-	    fprintf(f, "%u\n", state->turn[i].issuingPlayer[j]);
-	    fprintf(f, "%u\n", state->turn[i].fromNode[j]);
-	    fprintf(f, "%u\n", state->turn[i].toNode[j]);
-	    fprintf(f, "%u\n", state->turn[i].type[j]);
-	 }
+         fprintf(f, "%u\n", state->turn[i].orderCount);
+         for (unsigned j = 0; j < state->turn[i].orderCount; ++j)
+         {
+            fprintf(f, "%u\n", state->turn[i].issuingPlayer[j]);
+            fprintf(f, "%u\n", state->turn[i].fromNode[j]);
+            fprintf(f, "%u\n", state->turn[i].toNode[j]);
+            fprintf(f, "%u\n", state->turn[i].type[j]);
+         }
       }
 
       // Pending orders, only for the requesting player
       unsigned orderCount = 0;
       for (unsigned j = 0; j < state->turn[state->turnCount-1].orderCount; ++j)
       {
-	 if (state->turn[state->turnCount-1].issuingPlayer[j] == forPlayer)
+         if (state->turn[state->turnCount-1].issuingPlayer[j] == forPlayer)
 	    ++orderCount;
       }
       fprintf(f, "%u\n", orderCount);
       for (unsigned j = 0; j < state->turn[state->turnCount-1].orderCount; ++j)
       {
-	 if (state->turn[state->turnCount-1].issuingPlayer[j] == forPlayer)
-	 {
-	    fprintf(f, "%u\n", state->turn[state->turnCount-1].issuingPlayer[j]);
-	    fprintf(f, "%u\n", state->turn[state->turnCount-1].fromNode[j]);
-	    fprintf(f, "%u\n", state->turn[state->turnCount-1].toNode[j]);
-	    fprintf(f, "%u\n", state->turn[state->turnCount-1].type[j]);
-	 }
+         if (state->turn[state->turnCount-1].issuingPlayer[j] == forPlayer)
+         {
+            fprintf(f, "%u\n", state->turn[state->turnCount-1].issuingPlayer[j]);
+            fprintf(f, "%u\n", state->turn[state->turnCount-1].fromNode[j]);
+            fprintf(f, "%u\n", state->turn[state->turnCount-1].toNode[j]);
+            fprintf(f, "%u\n", state->turn[state->turnCount-1].type[j]);
+         }
       }
    }
    else // history for everyone
@@ -678,18 +652,18 @@ void serialize(struct GameState* state, unsigned forPlayer, FILE* f)
       // All historic turns
       if (state->turnCount > 0)
       {
-	 for (unsigned i = 0; i < state->turnCount-1; ++i)
-	 {
-	    fprintf(f, "%u\n", state->turn[i].orderCount);
-	    for (unsigned j = 0; j < state->turn[i].orderCount; ++j)
-	    {
-	       fprintf(f, "%u\n", state->turn[i].issuingPlayer[j]);
-	       fprintf(f, "%u\n", state->turn[i].fromNode[j]);
-	       fprintf(f, "%u\n", state->turn[i].toNode[j]);
-	       fprintf(f, "%u\n", state->turn[i].type[j]);
-	    }
-	 }
-	 fprintf(f, "0\n"); // no visible orders this round
+         for (unsigned i = 0; i < state->turnCount-1; ++i)
+         {
+            fprintf(f, "%u\n", state->turn[i].orderCount);
+            for (unsigned j = 0; j < state->turn[i].orderCount; ++j)
+            {
+               fprintf(f, "%u\n", state->turn[i].issuingPlayer[j]);
+               fprintf(f, "%u\n", state->turn[i].fromNode[j]);
+               fprintf(f, "%u\n", state->turn[i].toNode[j]);
+               fprintf(f, "%u\n", state->turn[i].type[j]);
+            }
+         }
+         fprintf(f, "0\n"); // no visible orders this round
       }
    }
 
@@ -723,15 +697,12 @@ struct GameState deserialize(FILE* f)
    state.controlledBy = calloc(sizeof(*(state.controlledBy)), state.nodeCount);
    state.controlledByInitial = calloc(sizeof(*(state.controlledByInitial)), state.nodeCount);
    state.nodeSpacePositions = calloc(sizeof(*(state.nodeSpacePositions)), state.nodeCount);
-   state.occupied = calloc(sizeof(*(state.occupied)), state.nodeCount);
-   state.occupiedInitial = calloc(sizeof(*(state.occupiedInitial)), state.nodeCount);
-   state.homeWorld = calloc(sizeof(*(state.homeWorld)), state.nodeCount);
-
+   
    for (unsigned i = 0; i < state.nodeCount; ++i)
    {
       for (unsigned j = 0; j < state.nodeCount; ++j)
       {
-	 fscanf(f, "%1u", &state.adjacencyMatrix[i*(state.nodeCount)+j]);
+         fscanf(f, "%1u", &state.adjacencyMatrix[i*(state.nodeCount)+j]);
       }
       fscanf(f, "\n");
    }
@@ -739,10 +710,10 @@ struct GameState deserialize(FILE* f)
    for (unsigned i = 0; i < state.nodeCount; ++i)
    {
       fscanf(f, "%f,%f,%f\n",
-	      &state.nodeSpacePositions[i].x,
-	      &state.nodeSpacePositions[i].y,
-	      &state.nodeSpacePositions[i].z
-	 );
+             &state.nodeSpacePositions[i].x,
+             &state.nodeSpacePositions[i].y,
+             &state.nodeSpacePositions[i].z
+         );
       state.nodeSpacePositions[i].w = 1.0;
    }
 
@@ -750,15 +721,7 @@ struct GameState deserialize(FILE* f)
    {
       fscanf(f, "%u\n", &state.controlledByInitial[i]);
    }
-   for (unsigned i = 0; i < state.nodeCount; ++i)
-   {
-      fscanf(f, "%u\n", &state.occupiedInitial[i]);
-   }
-   for (unsigned i = 0; i < state.nodeCount; ++i)
-   {
-      fscanf(f, "%u\n", &state.homeWorld[i]);
-   }
-
+   
    fscanf(f, "%u\n", &state.turnCount);
    state.turn = calloc(state.turnCount, sizeof(state.turn[0]));
    for (unsigned i = 0; i < state.turnCount; ++i)
@@ -772,10 +735,10 @@ struct GameState deserialize(FILE* f)
       
       for (unsigned j = 0; j < state.turn[i].orderCount; ++j)
       {
-	 fscanf(f, "%u\n", &state.turn[i].issuingPlayer[j]);
-	 fscanf(f, "%u\n", &state.turn[i].fromNode[j]);
-	 fscanf(f, "%u\n", &state.turn[i].toNode[j]);
-	 fscanf(f, "%u\n", &state.turn[i].type[j]);
+         fscanf(f, "%u\n", &state.turn[i].issuingPlayer[j]);
+         fscanf(f, "%u\n", &state.turn[i].fromNode[j]);
+         fscanf(f, "%u\n", &state.turn[i].toNode[j]);
+         fscanf(f, "%u\n", &state.turn[i].type[j]);
       }
       
    }
