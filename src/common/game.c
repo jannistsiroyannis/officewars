@@ -35,7 +35,7 @@ static void findIsland(struct GameState* state, unsigned node, unsigned* visited
    
    visited[node] = 1;
 
-   unsigned connected[state->nodeCount];
+   unsigned connected[MAXCONNECTIONS];
    unsigned connectedCount = 0;
    getConnectedNodes(state, node, connected, &connectedCount);
 
@@ -172,7 +172,7 @@ static unsigned topologicalDistance(struct GameState* state, unsigned a, unsigne
    unsigned head = 0, tail = 0, depth = 0, remainingAtDepth = 1;
 
    // For getConnected
-   unsigned connected[state->nodeCount];
+   unsigned connected[MAXCONNECTIONS];
    unsigned connectedCount = 0;
    
    queue[head++] = a;
@@ -215,6 +215,56 @@ static unsigned topologicalDistance(struct GameState* state, unsigned a, unsigne
    return -1;
 }
 
+static unsigned getPartitionSizeWithoutNode(struct GameState* state, unsigned node, unsigned nodeToRemove, unsigned* visited)
+{
+   unsigned connected[MAXCONNECTIONS];
+   unsigned connectedCount = 0;
+   getConnectedNodes(state, node, connected, &connectedCount);
+      
+   visited[node] = 1;
+   unsigned count = 1;
+   for (unsigned i = 0; i < connectedCount; ++i)
+   {
+      unsigned candidate = connected[i];
+      if (candidate != nodeToRemove &&
+          !visited[candidate] &&
+          state->controlledByInitial[node] == state->controlledByInitial[candidate])
+      {
+         count += getPartitionSizeWithoutNode(state, candidate, nodeToRemove, visited);
+      }   
+   }
+   return count;
+}
+
+static unsigned removalWouldSplitPartition(struct GameState* state, unsigned nodeToRemove, unsigned partitionSize)
+{
+   unsigned connected[MAXCONNECTIONS];
+   unsigned connectedCount = 0;
+   getConnectedNodes(state, nodeToRemove, connected, &connectedCount);
+
+   // Find a start node other than nodeToRemove
+   unsigned node = UINT_MAX;
+   for (unsigned i = 0; i < connectedCount; ++i)
+   {
+      unsigned n = connected[i];
+      if (state->controlledByInitial[nodeToRemove] == state->controlledByInitial[n])
+      {
+         node = n;
+         break;
+      }
+   }
+   if (node == UINT_MAX)
+      return 1; // Partition of size 1.. would make no sense
+
+   // Do DFS from 'node', expect to find partitionSize-1 nodes. Any less, and this removal would result in a split
+   unsigned visited[state->nodeCount];
+   memset(visited, 0, sizeof(visited[0]) * state->nodeCount);
+   unsigned partitionSizeWhenRemoved = getPartitionSizeWithoutNode(state, node, nodeToRemove, visited);
+   if (partitionSizeWhenRemoved == partitionSize-1)
+      return 0;
+   return 1;
+}
+
 static void partitionGraph(struct GameState* state)
 {
    // The idea is assign each player (but one) one node each. and the final player
@@ -226,8 +276,6 @@ static void partitionGraph(struct GameState* state)
    unsigned partitionCount = state->playerCount;
    unsigned partitionSize[partitionCount];
    memset(partitionSize, 0, sizeof(partitionSize[0]) * partitionCount);
-   //unsigned belongsToPartition[state->nodeCount];
-   //memset(belongsToPartition, 0, sizeof(belongsToPartition[0]) * state->nodeCount);
    unsigned* belongsToPartition = state->controlledByInitial;
    memset(belongsToPartition, 0, sizeof(belongsToPartition[0]) * state->nodeCount);
    
@@ -240,7 +288,7 @@ static void partitionGraph(struct GameState* state)
    partitionSize[0] = state->nodeCount - (state->playerCount-1);
 
    // Fight!
-   unsigned connected[state->nodeCount];
+   unsigned connected[MAXCONNECTIONS];
    unsigned connectedCount = 0;
    unsigned movement = 1;
    while(movement)
@@ -255,14 +303,15 @@ static void partitionGraph(struct GameState* state)
             unsigned candidatePartition = belongsToPartition[candidate];
             unsigned nodePartition = belongsToPartition[node];
             if (candidatePartition != nodePartition &&
-                partitionSize[candidatePartition] > partitionSize[nodePartition])
+                partitionSize[candidatePartition] > partitionSize[nodePartition] &&
+                !removalWouldSplitPartition(state, candidate, partitionSize[candidatePartition]))
             {
                // Steal!
                belongsToPartition[candidate] = nodePartition;
                partitionSize[candidatePartition]--;
                partitionSize[nodePartition]++;
                movement = 1;
-               fprintf(stderr, "Stole %u from player %u, to player %u\n", candidate, candidatePartition, nodePartition);
+               //fprintf(stderr, "Stole %u from player %u, to player %u\n", candidate, candidatePartition, nodePartition);
             }
          }
       }
@@ -520,11 +569,14 @@ unsigned nodesConnect(struct GameState* state, unsigned a, unsigned b)
 void getConnectedNodes(struct GameState* state, unsigned a, unsigned* out, unsigned* outSize)
 {
    unsigned* nodeRow = & (state->adjacencyMatrix[a * state->nodeCount]);
+   
    *outSize = 0;
    for (unsigned i = 0; i < state->nodeCount; ++i)
    {
       if (nodeRow[i])
+      {
          out[(*outSize)++] = i;
+      }
    }
 }
 
