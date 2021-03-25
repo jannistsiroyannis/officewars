@@ -41,6 +41,9 @@ static void step()
    last = now;
    cumulativeMs += deltaMs;
 
+   if (deltaMs > 1000)
+      return; // Just no.. don't drift off
+
    if (mouseState.dragging)
    {
       clientState.viewEulerX += clientState.viewEulerXVel * deltaMs;

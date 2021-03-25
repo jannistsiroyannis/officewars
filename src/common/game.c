@@ -215,62 +215,59 @@ static unsigned topologicalDistance(struct GameState* state, unsigned a, unsigne
    return -1;
 }
 
-/*
-static unsigned occupiedSystemWithin(struct GameState* state, unsigned a, unsigned within)
+static void partitionGraph(struct GameState* state)
 {
-   unsigned queue[state->nodeCount];
-   unsigned visited[state->nodeCount];
-   memset(visited, 0, sizeof(visited[0]) * state->nodeCount);
-   unsigned head = 0, tail = 0, depth = 0, remainingAtDepth = 1;
+   // The idea is assign each player (but one) one node each. and the final player
+   // the rest. These are now the partitions (player territories).
+   // From here we can let small partitions "steal" nodes along any edges,
+   // as long as the partition being stolen from is larger.
+   // Keep doing this, until all partitions are roughly equal in size.
 
-   // For getConnected
+   unsigned partitionCount = state->playerCount;
+   unsigned partitionSize[partitionCount];
+   memset(partitionSize, 0, sizeof(partitionSize[0]) * partitionCount);
+   //unsigned belongsToPartition[state->nodeCount];
+   //memset(belongsToPartition, 0, sizeof(belongsToPartition[0]) * state->nodeCount);
+   unsigned* belongsToPartition = state->controlledByInitial;
+   memset(belongsToPartition, 0, sizeof(belongsToPartition[0]) * state->nodeCount);
+   
+   // Set initial partitions
+   for (unsigned player = 1; player < state->playerCount; ++player)
+   {
+      belongsToPartition[player] = player;
+      partitionSize[player] = 1;
+   }
+   partitionSize[0] = state->nodeCount - (state->playerCount-1);
+
+   // Fight!
    unsigned connected[state->nodeCount];
    unsigned connectedCount = 0;
-   
-   queue[head++] = a;
-   visited[a] = 1;
-   while (head != tail)
+   unsigned movement = 1;
+   while(movement)
    {
-      // Get a node from queue
-      unsigned node = queue[tail];
-      if (++tail == state->nodeCount) tail = 0;
-
-      // If there's a player here,  we're done
-      if (state->controlledByInitial[node] != -1 && node != a)
+      movement = 0;
+      for (unsigned node = 0; node < state->nodeCount; ++node)
       {
-         return 1;
-      }
-      
-      // Put all not already visited connections in the queue
-      getConnectedNodes(state, node, connected, &connectedCount);
-      for (unsigned i = 0; i < connectedCount; ++i)
-      {
-         if (visited[connected[i]])
-            continue;
-         visited[connected[i]] = 1;
-         queue[head] = connected[i];
-         if (++head == state->nodeCount) head = 0;
-      }
-
-      if (--remainingAtDepth == 0)
-      {
-         ++depth;
-
-         if (depth > within)
+         getConnectedNodes(state, node, connected, &connectedCount);
+         for (unsigned i = 0; i < connectedCount; ++i)
          {
-            return 0;
+            unsigned candidate = connected[i];
+            unsigned candidatePartition = belongsToPartition[candidate];
+            unsigned nodePartition = belongsToPartition[node];
+            if (candidatePartition != nodePartition &&
+                partitionSize[candidatePartition] > partitionSize[nodePartition])
+            {
+               // Steal!
+               belongsToPartition[candidate] = nodePartition;
+               partitionSize[candidatePartition]--;
+               partitionSize[nodePartition]++;
+               movement = 1;
+               fprintf(stderr, "Stole %u from player %u, to player %u\n", candidate, candidatePartition, nodePartition);
+            }
          }
-        
-         if (head > tail)
-            remainingAtDepth = head - tail;
-         else
-            remainingAtDepth = head + state->nodeCount - tail;
       }
    }
-
-   return 0;
-}
-*/
+}  
 
 void startGame(struct GameState* state)
 {
@@ -292,23 +289,6 @@ void startGame(struct GameState* state)
 
       state->controlledByInitial[node] = -1;
    }
-
-   /*
-     for (unsigned player = 0; player < state->playerCount; ++player)
-     {
-     for (unsigned i = 0; i < NODESPERPLAYER; ++i)
-     {
-     unsigned node = player * NODESPERPLAYER + i;
-     state->controlledByInitial[node] = player;
-     }
-     *connectNodes(state, player * NODESPERPLAYER + 0, player * NODESPERPLAYER + 1);
-     connectNodes(state, player * NODESPERPLAYER + 1, player * NODESPERPLAYER + 2);
-     connectNodes(state, player * NODESPERPLAYER + 2, player * NODESPERPLAYER + 3);
-     connectNodes(state, player * NODESPERPLAYER + 3, player * NODESPERPLAYER + 0);
-     connectNodes(state, player * NODESPERPLAYER + 0, player * NODESPERPLAYER + 2);
-     connectNodes(state, player * NODESPERPLAYER + 2, player * NODESPERPLAYER + 0);
-     connectNodes(state, player * NODESPERPLAYER + 3, player * NODESPERPLAYER + 1);*
-     }*/
 
    // Randomly connect  nodes
    for (unsigned node = 0; node < state->nodeCount; ++node)
@@ -372,39 +352,15 @@ void startGame(struct GameState* state)
    
    // Random out player positions
    
-   for (unsigned player = 0; player < state->playerCount; ++player)
+   /*for (unsigned player = 0; player < state->playerCount; ++player)
    {
       unsigned node = rand() % state->nodeCount;
       unsigned positionIsOk = 0;
-
-      /*
-      unsigned tries = 0;
-      while (!positionIsOk)
-      {
-         ++tries;
-         if (tries > 200)
-         {
-            fprintf(stderr, "Gave up on player spacing! Throwing away the whole damned galaxy!\n");
-            //freeGameState(state);
-            startGame(state);
-            return;
-         }
-         while (state->controlledByInitial[node] != -1)
-            node = rand() % state->nodeCount;
-        
-         // Make sure there's no other player too close
-         positionIsOk = !occupiedSystemWithin(state, node, 1) && state->controlledByInitial[node] == -1;
-         }
-      
-      state->controlledByInitial[node] = player;      
-      */
-
-
-
       while (state->controlledByInitial[node] != -1)
          node = rand() % state->nodeCount;
       state->controlledByInitial[node] = player;
-   }
+      }*/
+   partitionGraph(state);
 
    // Do some passes of atract/repulse to make the graph easier on the human eye
    for (unsigned iterations = 0; iterations < 100; ++iterations)
