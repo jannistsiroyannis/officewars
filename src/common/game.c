@@ -2,12 +2,14 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <limits.h>
 
 #include "math/vec.h"
 #include "game.h"
 
 static const unsigned MAXCONNECTIONS = 5;
 static const unsigned MINCONNECTIONS = 2;
+static const unsigned NODESPERPLAYER = 4;
 
 static void connectNodes(struct GameState* state, unsigned a, unsigned b)
 {
@@ -213,6 +215,7 @@ static unsigned topologicalDistance(struct GameState* state, unsigned a, unsigne
    return -1;
 }
 
+/*
 static unsigned occupiedSystemWithin(struct GameState* state, unsigned a, unsigned within)
 {
    unsigned queue[state->nodeCount];
@@ -243,7 +246,7 @@ static unsigned occupiedSystemWithin(struct GameState* state, unsigned a, unsign
       for (unsigned i = 0; i < connectedCount; ++i)
       {
          if (visited[connected[i]])
-	    continue;
+            continue;
          visited[connected[i]] = 1;
          queue[head] = connected[i];
          if (++head == state->nodeCount) head = 0;
@@ -257,20 +260,21 @@ static unsigned occupiedSystemWithin(struct GameState* state, unsigned a, unsign
          {
             return 0;
          }
-	 
+        
          if (head > tail)
-	    remainingAtDepth = head - tail;
+            remainingAtDepth = head - tail;
          else
-	    remainingAtDepth = head + state->nodeCount - tail;
+            remainingAtDepth = head + state->nodeCount - tail;
       }
    }
 
    return 0;
 }
+*/
 
 void startGame(struct GameState* state)
 {
-   state->nodeCount = 4 * state->playerCount;
+   state->nodeCount = NODESPERPLAYER * state->playerCount;
    state->metaGameState = INGAME;
    state->adjacencyMatrix = calloc(sizeof(*(state->adjacencyMatrix)),
                                    (state->nodeCount * state->nodeCount));
@@ -289,7 +293,24 @@ void startGame(struct GameState* state)
       state->controlledByInitial[node] = -1;
    }
 
-   // Connect the nodes
+   /*
+     for (unsigned player = 0; player < state->playerCount; ++player)
+     {
+     for (unsigned i = 0; i < NODESPERPLAYER; ++i)
+     {
+     unsigned node = player * NODESPERPLAYER + i;
+     state->controlledByInitial[node] = player;
+     }
+     *connectNodes(state, player * NODESPERPLAYER + 0, player * NODESPERPLAYER + 1);
+     connectNodes(state, player * NODESPERPLAYER + 1, player * NODESPERPLAYER + 2);
+     connectNodes(state, player * NODESPERPLAYER + 2, player * NODESPERPLAYER + 3);
+     connectNodes(state, player * NODESPERPLAYER + 3, player * NODESPERPLAYER + 0);
+     connectNodes(state, player * NODESPERPLAYER + 0, player * NODESPERPLAYER + 2);
+     connectNodes(state, player * NODESPERPLAYER + 2, player * NODESPERPLAYER + 0);
+     connectNodes(state, player * NODESPERPLAYER + 3, player * NODESPERPLAYER + 1);*
+     }*/
+
+   // Randomly connect  nodes
    for (unsigned node = 0; node < state->nodeCount; ++node)
    {
       unsigned connectionsWanted = (rand() % (MAXCONNECTIONS - MINCONNECTIONS + 1)) + MINCONNECTIONS;
@@ -321,18 +342,21 @@ void startGame(struct GameState* state)
 
    // Find pairs of nodes that are extremely far apart (in topology)
    // and connect them. This should balance the problem of "chain/highway galaxies"
-   for (unsigned iterations = 0; iterations < 2 + state->playerCount / 2; ++iterations)
+   //for (unsigned iterations = 0; iterations < 2 + state->playerCount / 2; ++iterations)
+   for (unsigned iterations = 0; iterations < 2; ++iterations)
    {
-      unsigned farthestNode[2] = {0};
-      unsigned farthestDistance = -1;
+      unsigned farthestNode[2] = {UINT_MAX, UINT_MAX};
+      unsigned farthestDistance = 0;
       for (unsigned node = 0; node < state->nodeCount; ++node)
       {
+         if (getConnectedCount(state, node) >= MAXCONNECTIONS)
+            continue;
+         
          for (unsigned candidate = 0; candidate < state->nodeCount; ++candidate)
          {
-            // fix order for efficency!
             unsigned distance = topologicalDistance(state, node, candidate);
             if (!nodesConnect(state, node, candidate) &&
-                distance < farthestDistance &&
+                distance > farthestDistance &&
                 node != candidate &&
                 getConnectedCount(state, candidate) < MAXCONNECTIONS)
             {
@@ -342,15 +366,18 @@ void startGame(struct GameState* state)
             }
          }
       }
-      connectNodes(state, farthestNode[0], farthestNode[1]);
+      if (farthestNode[0] != UINT_MAX && farthestNode[1] != UINT_MAX)
+         connectNodes(state, farthestNode[0], farthestNode[1]);
    }
-
-   // Random out player start positions
+   
+   // Random out player positions
+   
    for (unsigned player = 0; player < state->playerCount; ++player)
    {
       unsigned node = rand() % state->nodeCount;
       unsigned positionIsOk = 0;
 
+      /*
       unsigned tries = 0;
       while (!positionIsOk)
       {
@@ -362,12 +389,20 @@ void startGame(struct GameState* state)
             startGame(state);
             return;
          }
-         node = rand() % state->nodeCount;
-	 
+         while (state->controlledByInitial[node] != -1)
+            node = rand() % state->nodeCount;
+        
          // Make sure there's no other player too close
          positionIsOk = !occupiedSystemWithin(state, node, 1) && state->controlledByInitial[node] == -1;
-      }
+         }
       
+      state->controlledByInitial[node] = player;      
+      */
+
+
+
+      while (state->controlledByInitial[node] != -1)
+         node = rand() % state->nodeCount;
       state->controlledByInitial[node] = player;
    }
 
