@@ -7,9 +7,15 @@
 #include "math/vec.h"
 #include "game.h"
 
-static const unsigned MAXCONNECTIONS = 5;
+static const unsigned MAXCONNECTIONS = 4;
 static const unsigned MINCONNECTIONS = 2;
 static const unsigned NODESPERPLAYER = 4;
+
+static void disconnectNodes(struct GameState* state, unsigned a, unsigned b)
+{
+   state->adjacencyMatrix[a * state->nodeCount + b] = 0;
+   state->adjacencyMatrix[b * state->nodeCount + a] = 0;
+}
 
 static void connectNodes(struct GameState* state, unsigned a, unsigned b)
 {
@@ -130,12 +136,15 @@ static void connectIslands(struct GameState* state)
       unsigned nearestNodes[4];
       for (unsigned i = 0; i < state->nodeCount; ++i)
       {
-         if (currentIsland[i] && getConnectedCount(state, i) < MAXCONNECTIONS)
+         if (currentIsland[i])
          {
             for (unsigned j = 0; j < state->nodeCount; ++j)
             {
-               if (!currentIsland[j] && getConnectedCount(state, j) < MAXCONNECTIONS)
+               if (!currentIsland[j])
                {
+                  if (i == j)
+                     continue;
+            
                   float dist = V3SqrDist(V4toV3(state->nodeSpacePositions[i]), V4toV3(state->nodeSpacePositions[j]));
                   if (dist < shortestDist[0])
                   {
@@ -156,10 +165,22 @@ static void connectIslands(struct GameState* state)
       
       connectNodes(state, nearestNodes[0], nearestNodes[1]);
       connectNodes(state, nearestNodes[2], nearestNodes[3]);
+
+      for (unsigned i = 0; i < 4; ++i)
+      {
+         unsigned node = nearestNodes[i];
+         unsigned connected[MAXCONNECTIONS+2];
+         unsigned connectedCount = 0;
+         getConnectedNodes(state, node, connected, &connectedCount);
+         while (connectedCount > MAXCONNECTIONS)
+         {
+            disconnectNodes(state, node, connected[rand()%connectedCount]);
+            getConnectedNodes(state, node, connected, &connectedCount);
+         }
+      }
    
-      // Merge the islands
-      findIsland(state, nearestNodes[1], currentIsland);
-      findIsland(state, nearestNodes[3], currentIsland);
+      memset(currentIsland, 0, state->nodeCount * sizeof(currentIsland[0]));
+      findIsland(state, 0, currentIsland);
    }
 }
 
@@ -291,8 +312,13 @@ static void partitionGraph(struct GameState* state)
    unsigned connected[MAXCONNECTIONS];
    unsigned connectedCount = 0;
    unsigned movement = 1;
+   unsigned iterationsDone = 0;
    while(movement)
    {
+      ++iterationsDone;
+      if (iterationsDone >= 200) // Sometimes you just gotta give it up..
+         break;
+         
       movement = 0;
       for (unsigned node = 0; node < state->nodeCount; ++node)
       {
@@ -300,6 +326,7 @@ static void partitionGraph(struct GameState* state)
          for (unsigned i = 0; i < connectedCount; ++i)
          {
             unsigned candidate = connected[i];
+            
             unsigned candidatePartition = belongsToPartition[candidate];
             unsigned nodePartition = belongsToPartition[node];
             if (candidatePartition != nodePartition &&
@@ -400,16 +427,25 @@ void startGame(struct GameState* state)
    }
    
    // Random out player positions
-   
-   /*for (unsigned player = 0; player < state->playerCount; ++player)
    {
-      unsigned node = rand() % state->nodeCount;
-      unsigned positionIsOk = 0;
-      while (state->controlledByInitial[node] != -1)
-         node = rand() % state->nodeCount;
-      state->controlledByInitial[node] = player;
-      }*/
-   partitionGraph(state);
+      unsigned connected[MAXCONNECTIONS];
+      unsigned connectedCount = 0;
+      
+      for (unsigned player = 0; player < state->playerCount; ++player)
+      {
+         unsigned node = rand() % state->nodeCount;
+         while (state->controlledByInitial[node] != -1)
+         {
+            node = rand() % state->nodeCount;
+         }
+         state->controlledByInitial[node] = player;
+      }
+   }
+   
+   // Doesn't _really_ work. Too often, no stealing can be done,
+   // because everywhere you try, the target partition would be divided,
+   // meaning it stays huge.
+   //partitionGraph(state); 
 
    // Do some passes of atract/repulse to make the graph easier on the human eye
    for (unsigned iterations = 0; iterations < 100; ++iterations)
