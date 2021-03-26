@@ -91,15 +91,7 @@ static void resolveTurn(struct GameState* game, unsigned turnIndex)
       unsigned initialDefenceStrength = 1;
       if (game->controlledBy[node] == -1)
          initialDefenceStrength = 0;
-      for (unsigned order = 0; order < turn->orderCount; ++order)
-      {
-         if (turn->fromNode[order] == node && // there is an attack order from the defending system
-             game->controlledBy[turn->toNode[order]] != game->controlledBy[turn->fromNode[order]]) // And it really is an attack, not a move
-         {
-            initialDefenceStrength = 0;
-         }
-      }
-	 
+      
       defensiveStrength[node] = initialDefenceStrength + countSupporters(game, turn, node, pinned);  
    }
 
@@ -118,16 +110,6 @@ static void resolveTurn(struct GameState* game, unsigned turnIndex)
          {
             // Judge strength of attack
             unsigned strength = 1 + countSupporters(game, turn, turn->fromNode[order], pinned);
-            // If the defender "attacks back", consider the attackers strength reduced by one (the defender should not be disadvantaged for preempting an attack)
-            for (unsigned defenderOrder = 0; defenderOrder < turn->orderCount; ++defenderOrder)
-            {
-               if (turn->fromNode[defenderOrder] == node &&
-                   turn->toNode[defenderOrder] == turn->fromNode[order])
-               {
-                  --strength;
-               }
-            }
-	    
             if (strength > candidateStrength) // a new strongest attacker
             {
                strongestAttackingPlayer = turn->issuingPlayer[order];
