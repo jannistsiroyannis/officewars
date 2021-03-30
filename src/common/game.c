@@ -9,7 +9,7 @@
 
 static const unsigned MAXCONNECTIONS = 4;
 static const unsigned MINCONNECTIONS = 2;
-static const unsigned NODESPERPLAYER = 4;
+static const unsigned NODESPERPLAYER = 3;
 
 static void disconnectNodes(struct GameState* state, unsigned a, unsigned b)
 {
@@ -343,7 +343,66 @@ static void partitionGraph(struct GameState* state)
          }
       }
    }
-}  
+}
+
+static unsigned bordersToEnemy(struct GameState* state, unsigned node, unsigned player)
+{
+   unsigned connected[MAXCONNECTIONS];
+   unsigned connectedCount = 0;
+   getConnectedNodes(state, node, connected, &connectedCount);
+   for (unsigned i = 0; i < connectedCount; ++i)
+   {
+      unsigned candidate = connected[i];
+      unsigned candidatePlayer = state->controlledByInitial[candidate];
+
+      if (candidatePlayer != -1 && candidatePlayer != player)
+         return 1;
+   }
+   return 0;
+}
+
+static void repulsePlayers(struct GameState* state)
+{
+   unsigned connected[MAXCONNECTIONS];
+   unsigned connectedCount = 0;
+   unsigned better[MAXCONNECTIONS];
+   unsigned betterCount = 0;
+   unsigned movement = 1;
+   unsigned iterationsDone = 0;
+   while(movement)
+   {
+      ++iterationsDone;
+      if (iterationsDone >= 200) // Sometimes you just gotta give it up..
+         break;
+         
+      movement = 0;
+      for (unsigned node = 0; node < state->nodeCount; ++node)
+      {
+         unsigned player = state->controlledByInitial[node];
+         if (player != -1)
+         {
+            betterCount = 0;
+            getConnectedNodes(state, node, connected, &connectedCount);
+            for (unsigned i = 0; i < connectedCount; ++i)
+            {
+               unsigned candidate = connected[i];
+               if (!bordersToEnemy(state, candidate, player))
+               {
+                  better[betterCount++] = candidate;
+               }
+            }
+
+            if (betterCount)
+            {
+               unsigned selectedBetterNode = better[rand() % betterCount];
+               state->controlledByInitial[node] = -1;
+               state->controlledByInitial[selectedBetterNode] = player;
+               movement = 1;
+            }
+         }
+      }
+   }
+}
 
 void startGame(struct GameState* state)
 {
@@ -447,6 +506,8 @@ void startGame(struct GameState* state)
    // meaning it stays huge.
    //partitionGraph(state); 
 
+   repulsePlayers(state);
+   
    // Do some passes of atract/repulse to make the graph easier on the human eye
    for (unsigned iterations = 0; iterations < 100; ++iterations)
    {
