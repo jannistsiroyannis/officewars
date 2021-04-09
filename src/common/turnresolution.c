@@ -115,7 +115,8 @@ static void resolveTurn(struct GameState* game, unsigned turnIndex)
                strongestAttackingPlayer = turn->issuingPlayer[order];
                strongestAttackingCandidate = turn->fromNode[order];
                candidateStrength = strength;
-            } else if (strength == candidateStrength) // a tied attacker (none must win!)
+            } else if (strength == candidateStrength && // a tied attacker (another player). None must win!
+                       turn->issuingPlayer[order] != strongestAttackingPlayer)
             {
                strongestAttackingPlayer = -1;
                strongestAttackingCandidate = -1;
