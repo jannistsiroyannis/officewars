@@ -605,6 +605,10 @@ void addOrder(struct GameState* game, unsigned type, unsigned from, unsigned to,
    turn->toNode = realloc(turn->toNode, (turn->orderCount+1) * sizeof(turn->toNode[0]));
    turn->type = realloc(turn->type, (turn->orderCount+1) * sizeof(turn->type[0]));
 
+   // If the target is "your own", be helpful and convert to a supportorder.
+   if (game->controlledBy[to] == playerId)
+      type = 1;
+
    // Add the new orders at the end
    turn->issuingPlayer[turn->orderCount] = playerId;
    turn->fromNode[turn->orderCount] = from;
