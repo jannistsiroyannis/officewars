@@ -135,6 +135,9 @@ static void resolveTurn(struct GameState* game, unsigned turnIndex)
 
 void tickGame(struct GameState* game)
 {
+   if (game->metaGameState != INGAME)
+      return;
+   
    fprintf(stderr, "TICK GOING turn now: %u!\n", game->turnCount);
    // Add a new turn, implicitly finalizing the current one
    game->turnCount++;
