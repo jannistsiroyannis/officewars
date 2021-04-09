@@ -51,8 +51,10 @@ static void receiveGames(const char* data, unsigned size)
   </button>", game.id);
             }
             else
+            {
                free(token);
-            fprintf(htmlF, "You have already joined this game.");
+               fprintf(htmlF, "You have already joined this game.");
+            }
 	    break;
 	 }
 	    
