@@ -28,13 +28,6 @@ static void receiveGames(const char* data, unsigned size)
    if (!htmlF)
       return;
 
-   // Create game
-   fprintf(htmlF, " \
-	      <div> \
-		Games list:<br/><br/>\
-	        <button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('create'), ALLOC_NORMAL))\">Create new game</button> \
-	      </div>");
-   
    // Open games list
    for (unsigned i = 0; i < gameCount; ++i)
    {
@@ -59,12 +52,7 @@ static void receiveGames(const char* data, unsigned size)
             }
             else
                free(token);
-            fprintf(htmlF, "<button \
-    type=\"button\" \
-    onClick=\"_receiveButtonClick(allocate(intArrayFromString('start %s'), ALLOC_NORMAL))\">\
-      Start game \
-  </button> \
-</div>", game.id);
+            fprintf(htmlF, "You have already joined this game.");
 	    break;
 	 }
 	    
@@ -211,21 +199,6 @@ void receiveButtonClick(char* value)
    {
       gotoState(GAME_SELECTION, 0);
    }
-   else if (!strcmp(value, "create"))
-   {
-      gotoState(GAME_CREATION, 0);
-   }
-   else if (!strcmp(value, "createdone"))
-   {
-      // TODO: USE EM_JS instead. To avoid dangerous coercing to int
-      char* gameName = (char*) EM_ASM_INT(
-         {
-            var gameNameInput = document.getElementById("gameNameInput");
-            return allocate(intArrayFromString(gameNameInput.value), ALLOC_NORMAL);
-         });
-      makeAjaxRequest("/cgi-bin/server/games", "POST", gameName, receiveGames);
-      free(gameName);
-   }
    else if (!strncmp(value, "enter ", strlen("enter ")))
    {
       char* gameId = value + strlen("enter ");
@@ -235,16 +208,6 @@ void receiveButtonClick(char* value)
    {
       char* gameId = value + strlen("registerfor ");
       gotoState(REGISTER_FOR, gameId);
-   }
-   else if (!strncmp(value, "start ", strlen("start ")))
-   {
-      char* gameId = value + strlen("start ");
-      gotoState(START_CONFIRM, gameId);
-   }
-   else if (!strncmp(value, "startconfirm ", strlen("startconfirm ")))
-   {
-      char* gameId = value + strlen("startconfirm ");
-      makeAjaxRequest("/cgi-bin/server/start", "POST", gameId, receiveStartConfirm);
    }
    else if (!strncmp(value, "registerconfirm ", strlen("registerconfirm ")))
    { 

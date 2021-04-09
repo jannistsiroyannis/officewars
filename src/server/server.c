@@ -134,6 +134,27 @@ static void tickAllGames()
    }
 }
 
+static void startAllGames()
+{
+   DIR *d;
+   struct dirent *dir;
+   d = opendir(".");
+   if (d)
+   {
+      while ((dir = readdir(d)) != NULL)
+      {
+         if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
+         {
+            struct GameState game = loadGame(dir->d_name);
+            startGame(&game);
+            saveAndCloseGame(&game, dir->d_name);
+         }
+      }
+      closedir(d);
+   }
+}
+
+
 static void addRandomAI()
 {
    DIR *d;
@@ -219,9 +240,17 @@ int main (int argc, char** argv)
    }
    if (chdir("./games") != 0) exitWithError(500);
 
+   srand(time(NULL));
+
    if (argc == 2 && !strcmp(argv[1], "tick"))
    {
       tickAllGames();
+      return 0;
+   }
+
+   if (argc == 2 && !strcmp(argv[1], "start"))
+   {
+      startAllGames();
       return 0;
    }
 
@@ -233,7 +262,19 @@ int main (int argc, char** argv)
       return 0;
    }
 
-   srand(time(NULL));
+   if (argc == 3 && !strcmp(argv[1], "start"))
+   {
+      struct GameState game = loadGame(argv[2]);
+      startGame(&game);
+      saveAndCloseGame(&game, argv[2]);
+      return 0;
+   }
+
+   if (argc == 3 && !strcmp(argv[1], "create"))
+   {
+      createNewGameFile(argv[2]);
+      return 0;
+   }
 
    // For dev/debug, add "random action AI".
    if (argc == 3 && !strcmp(argv[1], "randomadd"))
@@ -268,12 +309,6 @@ int main (int argc, char** argv)
    // Interpret and respond
    if (!strcmp(path, "/games"))
    {
-      if (!strcmp(method, "POST"))
-      {
-         createNewGameFile(data);
-      }
-
-      // Respond regardless of the method
       printf("Content-Type: text/plain\n\n");	    
 
       // First, the number of games
@@ -353,14 +388,6 @@ int main (int argc, char** argv)
       saveAndCloseGame(&game, gameId);
       printf("Content-Type: text/plain\n\n");
       printf("%s\n%s\n", gameId, playerSecret);
-   }
-   else if (!strncmp(path, "/start", strlen("/start")))
-   {
-      struct GameState game = loadGame(data);
-      startGame(&game);
-      printf("Content-Type: text/plain\n\n");
-      printf("Start OK.\n");
-      saveAndCloseGame(&game, data);
    }
    else if (!strcmp(path, "/orders"))
    {
