@@ -173,6 +173,7 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	    else
 	    {
 	       context.fillStyle = "black";
+               context.fillText("(" + node + ")", nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+5+perspectiveRadius);
 	    }
 
 	    // Draw the node itself
