@@ -386,7 +386,8 @@ static void repulsePlayers(struct GameState* state)
             for (unsigned i = 0; i < connectedCount; ++i)
             {
                unsigned candidate = connected[i];
-               if (!bordersToEnemy(state, candidate, player))
+               if (!bordersToEnemy(state, candidate, player) &&
+                   state->controlledByInitial[candidate] == -1)
                {
                   better[betterCount++] = candidate;
                }
@@ -457,7 +458,6 @@ void startGame(struct GameState* state)
 
    // Find pairs of nodes that are extremely far apart (in topology)
    // and connect them. This should balance the problem of "chain/highway galaxies"
-   //for (unsigned iterations = 0; iterations < 2 + state->playerCount / 2; ++iterations)
    for (unsigned iterations = 0; iterations < 2; ++iterations)
    {
       unsigned farthestNode[2] = {UINT_MAX, UINT_MAX};
