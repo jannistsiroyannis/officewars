@@ -38,7 +38,7 @@ static void receiveGames(const char* data, unsigned size)
 	 case PREGAME:
 	 {
             fprintf(htmlF, " \
-<div style=\"padding: 1em;\"> \
+<div class=\"game-entry\"> \
   <b>Open to join: </b>%s<br/><b>%u</b> players have joined<br/>", game.gameName, game.playerCount);
 
             char* token = getCookie(game.id);
@@ -55,13 +55,14 @@ static void receiveGames(const char* data, unsigned size)
                free(token);
                fprintf(htmlF, "You have already joined this game.");
             }
+            fprintf(htmlF, "</div>");
 	    break;
 	 }
 	    
 	 case INGAME:
 	 {
 	    fprintf(htmlF, " \
-<div> \
+<div class=\"game-entry\"> \
   <b>In-game: </b>%s<br/><b>%u</b> players<br/> \
   <button \
     type=\"button\" \
@@ -169,7 +170,7 @@ void receiveState(const char* data, unsigned size)
 	 var controlArea = document.getElementById("control");
 	 controlArea.innerHTML = "<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Game selection</button>";
 	 controlArea.innerHTML += "&nbsp;<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('historyp'), ALLOC_NORMAL))\">&lt</button>";
-	 controlArea.innerHTML += "<input type=\"text\" id=\"turnInput\" style=\"border:1px solid #000000;\" size=\"4\" value=\"" + $0 + "\"/>";
+	 controlArea.innerHTML += "<input type=\"text\" id=\"turnInput\" size=\"4\" value=\"" + $0 + "\"/>";
 	 controlArea.innerHTML += "<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('historyn'), ALLOC_NORMAL))\">&gt</button>";
 	 controlArea.innerHTML += "<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('historyl'), ALLOC_NORMAL))\">&gt&gt</button>";
 	 controlArea.innerHTML += "<button type=\"button\" onClick=\"window.open('rules.html');\">Read rules</button>";
@@ -341,11 +342,15 @@ Please confirm game start. Once the game has started, new players will no longer
             }
 	 
             controlArea.innerHTML = "\
-Please enter a name and choose a color to join the game.<br/> \
-<input type=\"text\" id=\"playerName\" name=\"name\"/><label for\"name\">Name</label> <br/>\
-<input type=\"color\" id=\"playerColor\" name=\"color\" value=\""+colorPreset+"\"/><label for\"color\">Color</label> <br/> \
+<div class=\"info\">Please enter a name and choose a color to join the game.</div>\
+<div class=\"config\">\
+<input type=\"text\" id=\"playerName\" placeholder=\"Name\" name=\"name\"/><label for=\"playerName\">Name</label>\
+<input type=\"color\" id=\"playerColor\" name=\"color\" value=\""+colorPreset+"\"/><label for=\"playerColor\">Color</label>\
+</div>\
+<div class=\"footer\">\
 <button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('registerconfirm "+ UTF8ToString($0) +" ' + document.getElementById('playerColor').value + ' ' + document.getElementById('playerName').value ), ALLOC_NORMAL))\">Join</button>\
-<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Cancel</button>";
+<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Cancel</button>\
+</div>";
          }, parameter);
    }
    else if (target == SECRET_DISPLAY)
@@ -358,9 +363,13 @@ Please enter a name and choose a color to join the game.<br/> \
             var secret = parts[1];
             document.cookie = gameId + "=" + secret + "; Max-Age=8640000; SameSite=Strict"; 
             controlArea.innerHTML = " \
-Your access token for this game is:<br/><br/><b>" + secret +"</b><br/><br/>\
-Please save it somewhere or write it down! If you clear you browser cookies, or want to player from another computer, you will need this token to get back into the game!<br/> \
-<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Done</button>";
+<div class=\"info\">\
+Your accesstoken for this game is: <span class=\"secret\">" + secret + "</span>\
+Please save it somewhere or write it down! If you clear you browser cookies, or want to player from another computer, you will need this token to get back into the game!\
+</div>\
+<div class=\"footer\">\
+<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Done</button>\
+</div>";
          }, parameter);
    }
 }
