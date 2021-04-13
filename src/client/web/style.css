@@ -1,0 +1,17 @@
+#control {
+    text-align: center;
+    height: 250px;
+    width: 500px;
+    overflow: auto;
+    border: 1px solid #000000;
+    position: absolute;
+    top: 240px;
+    left: 550px;
+    background-color: rgba(255,255,255,1.0);
+    padding: 1em;
+}
+
+#canv {
+    border: 1px solid #000000;
+    position: relative;
+}
