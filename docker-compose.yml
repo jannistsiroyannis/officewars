@@ -1,15 +1,15 @@
 version: "3.9"
 services:
   build:
-    image: emscripten/emsdk
-    user: "1001:1001"
+    image: emscripten/emsdk:2.0.15
+    user: "${CURRENT_UID:-1000:1000}"
     volumes:
       - .:/exec
     working_dir: /exec
     entrypoint: ["sh", "./build.sh"]
   serve:
     image: python:3.9.2
-    user: "1001:1001"
+    user: "${CURRENT_UID:-1000:1000}"
     volumes:
       - .:/exec
     ports:
