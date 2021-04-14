@@ -176,7 +176,7 @@ void receiveState(const char* data, unsigned size)
 	 controlArea.innerHTML += "<button type=\"button\" onClick=\"window.open('rules.html');\">Read rules</button>";
 	 if ($1 == 0)
 	 {
-	    controlArea.innerHTML += "<input type=\"text\" id=\"secretInput\" onkeypress=\"javascript: if(event.keyCode == 13){_receiveButtonClick(allocate(intArrayFromString('setsecret ' + event.target.value), ALLOC_NORMAL));}\"/>";
+	    controlArea.innerHTML += "<input type=\"text\" placeholder=\"Enter secret to rejoin\" id=\"secretInput\" onkeypress=\"javascript: if(event.keyCode == 13){_receiveButtonClick(allocate(intArrayFromString('setsecret ' + event.target.value), ALLOC_NORMAL));}\"/>";
 	 }
       }, clientState.state.turnCount-1, playerIsAuthed());
 
@@ -365,7 +365,7 @@ Please confirm game start. Once the game has started, new players will no longer
             controlArea.innerHTML = " \
 <div class=\"info\">\
 Your accesstoken for this game is: <span class=\"secret\">" + secret + "</span>\
-Please save it somewhere or write it down! If you clear you browser cookies, or want to player from another computer, you will need this token to get back into the game!\
+Please save it somewhere or write it down! If you clear you browser cookies, or want to play from another computer, you will need this token to get back into the game!\
 </div>\
 <div class=\"footer\">\
 <button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Done</button>\
