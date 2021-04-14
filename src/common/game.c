@@ -433,7 +433,7 @@ void startGame(struct GameState* state)
       
       while (getConnectedCount(state, node) < connectionsWanted)
       {
-         unsigned nearestNode = 0;
+         unsigned nearestNode = UINT_MAX;
          float nearestDistance = 9999999.0;
          for (unsigned candidate = 0; candidate < state->nodeCount; ++candidate)
          {
@@ -449,7 +449,11 @@ void startGame(struct GameState* state)
                nearestDistance = distance;
             }
          }
-         connectNodes(state, node, nearestNode);
+
+         if (nearestNode != UINT_MAX)
+            connectNodes(state, node, nearestNode);
+         else
+            break; // It may not possible to connect this node any further, causing an infinite loop.
       }
    }
 
