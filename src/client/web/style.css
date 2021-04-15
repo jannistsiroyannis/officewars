@@ -16,7 +16,7 @@ body {
     background: rgba(255, 255, 255, 0.2);
 }
 
-#control {
+.control {
     position: absolute;
     padding: 5px;
     border: 1px solid #000;
@@ -24,18 +24,18 @@ body {
     background: rgba(0, 0, 0, 0.4);
 }
 
-#control.menu {
+.control.menu {
     top: 50%;
     left: 50%;
     transform: translateX(-50%) translatey(-50%);
 }
 
-#control.game {
+.control.game {
     top: 15px;
     left: 15px;
 }
 
-#control input {
+.control input {
     border: solid 1px #000;
     margin-right: 1px;
     padding: 5px 10px;
@@ -43,7 +43,7 @@ body {
     color: #fff;
 }
 
-#control button {
+.control button {
     border: solid 1px #000;
     background-color: rgba(0, 0, 0, 0.4);
     color: #fff;
@@ -52,35 +52,35 @@ body {
     padding: 5px 10px;
 }
 
-#control button:hover {
+.control button:hover {
     background-color: rgba(0, 0, 0, 0.6);
 }
 
-#control > .game-entry {
+.control > .game-entry {
     padding: 5px 10px;
     background-color: rgba(255, 255, 255, 0.4);
     margin-bottom: 5px;
 }
 
-#control > .game-entry:last-child {
+.control > .game-entry:last-child {
     margin: 0;
 }
 
-#control > .game-entry > button {
+.control > .game-entry > button {
     width: 100%;
     margin: 0;
     margin-top: 5px;
 }
 
-#control > .info, #control > .config {
+.control > .info, .control > .config {
     margin-bottom: 5px;
 }
 
-#control > .info, #control > .config {
+.control > .info, .control > .config {
     padding: 0 10px;
 }
 
-#control > .info > .secret {
+.control > .info > .secret {
     display: inline-block;
     background: rgba(0, 0, 0, 0.4);
     padding: 5px 20px;
@@ -88,18 +88,18 @@ body {
     font-size: 80%;
 }
 
-#control > .config > input, #control > .config > label {
+.control > .config > input, .control > .config > label {
     display: inline-block;
     width: calc(50% - 1px);
     padding: 5px 10px;
 }
 
-#control > .footer {
+.control > .footer {
     display: flex;
     flex-direction: row;
 }
 
-#control > .footer > button {
+.control > .footer > button {
     flex: 1;
 }
 

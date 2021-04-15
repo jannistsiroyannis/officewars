@@ -22,70 +22,35 @@ static void receiveGames(const char* data, unsigned size)
    unsigned gameCount;
    fscanf(f, "%u\n", &gameCount);
 
+   EM_ASM({
+      mainMenu();
+	});
    
-   char htmlBuf[4096] = {0};
-   FILE* htmlF = fmemopen((void*)htmlBuf, 4095, "w");
-   if (!htmlF)
-      return;
-
    // Open games list
    for (unsigned i = 0; i < gameCount; ++i)
    {
       struct GameState game = deserialize(f);
-
-      switch (game.metaGameState)
-      {
-	 case PREGAME:
-	 {
-            fprintf(htmlF, " \
-<div class=\"game-entry\"> \
-  <b>Open to join: </b>%s<br/><b>%u</b> players have joined<br/>", game.gameName, game.playerCount);
-
-            char* token = getCookie(game.id);
-            if (!token)
-            {
-               fprintf(htmlF, "<button \
-    type=\"button\" \
-    onClick=\"_receiveButtonClick(allocate(intArrayFromString('registerfor %s'), ALLOC_NORMAL))\">\
-      Join game \
-  </button>", game.id);
-            }
-            else
-            {
-               free(token);
-               fprintf(htmlF, "You have already joined this game.");
-            }
-            fprintf(htmlF, "</div>");
-	    break;
-	 }
-	    
-	 case INGAME:
-	 {
-	    fprintf(htmlF, " \
-<div class=\"game-entry\"> \
-  <b>In-game: </b>%s<br/><b>%u</b> players<br/> \
-  <button \
-    type=\"button\" \
-    onClick=\"_receiveButtonClick(allocate(intArrayFromString('enter %s'), ALLOC_NORMAL))\">\
-      Enter/observ \
-  </button> \
-</div>", game.gameName, game.playerCount, game.id);
-	    break;
-	 }
-      }
-
+      char* token = getCookie(game.id);
+      int isInGame = token != NULL;
+      free(token);
+      EM_ASM({
+         let gameId = UTF8ToString($2);
+         let isInGame = $4;
+         addGame({
+            name: UTF8ToString($0),
+            count: $1,
+            id: gameId,
+            state: $3,
+            inGame: isInGame,
+            join: isInGame ? null : (() => _receiveButtonClick(
+               allocate(intArrayFromString('registerfor ' + gameId), ALLOC_NORMAL)
+            )),
+            view: () => _receiveButtonClick(allocate(intArrayFromString('enter ' + gameId), ALLOC_NORMAL))
+         });
+      }, game.gameName, game.playerCount, game.id, game.metaGameState, isInGame);
    }
 
    fclose(f);
-   fclose(htmlF);
-   
-   EM_ASM(
-      {
-	 var controlArea = document.getElementById("control");
-	 controlArea.innerHTML = UTF8ToString($0);
-      }, htmlBuf
-      );
-
 }
 
 static void receiveStartConfirm(const char* data, unsigned size)
@@ -277,17 +242,14 @@ void gotoState(enum StateTarget target, const char* parameter)
       EM_ASM(
 	 {
 	    // Both globally defined in index.html
-	    controlPosition = "side menu";
-	    resize();
+       gameMenu();
 	 });
    }
    else
    {
       EM_ASM(
 	 {
-	    // Both globally defined in index.html
-	    controlPosition = "main menu";
-	    resize();
+       mainMenu();
 	 });
    }
 
@@ -333,43 +295,47 @@ Please confirm game start. Once the game has started, new players will no longer
    {
       EM_ASM(
          {
-            var controlArea = document.getElementById("control");
-            var n = "0123456789ABCDEF";
-            var colorPreset = "#";// + (Math.random()*0xFFFFFF).toString(16);
-            for (var i = 0; i < 6; i++)
-            {
-               colorPreset += n[Math.floor(Math.random() * 16)];
-            }
-	 
-            controlArea.innerHTML = "\
-<div class=\"info\">Please enter a name and choose a color to join the game.</div>\
-<div class=\"config\">\
-<input type=\"text\" id=\"playerName\" placeholder=\"Name\" name=\"name\"/><label for=\"playerName\">Name</label>\
-<input type=\"color\" id=\"playerColor\" name=\"color\" value=\""+colorPreset+"\"/><label for=\"playerColor\">Color</label>\
-</div>\
-<div class=\"footer\">\
-<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('registerconfirm "+ UTF8ToString($0) +" ' + document.getElementById('playerColor').value + ' ' + document.getElementById('playerName').value ), ALLOC_NORMAL))\">Join</button>\
-<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Cancel</button>\
-</div>";
+            registerFor({
+               register: (color, name) => {
+                  _receiveButtonClick(
+                     allocate(
+                        intArrayFromString([
+                           "registerconfirm",
+                           UTF8ToString($0),
+                           color,
+                           name
+                        ].join(" ")),
+                        ALLOC_NORMAL
+                     )
+                  );
+               },
+               cancel: () => _receiveButtonClick(
+                  allocate(
+                     intArrayFromString('list'),
+                     ALLOC_NORMAL
+                  )
+               )
+            });
          }, parameter);
    }
    else if (target == SECRET_DISPLAY)
    {
       EM_ASM(
          {
-            var controlArea = document.getElementById("control");
-            var parts = UTF8ToString($0).split("\n");
-            var gameId = parts[0];
-            var secret = parts[1];
-            document.cookie = gameId + "=" + secret + "; Max-Age=8640000; SameSite=Strict"; 
-            controlArea.innerHTML = " \
-<div class=\"info\">\
-Your accesstoken for this game is: <span class=\"secret\">" + secret + "</span>\
-Please save it somewhere or write it down! If you clear you browser cookies, or want to play from another computer, you will need this token to get back into the game!\
-</div>\
-<div class=\"footer\">\
-<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Done</button>\
-</div>";
+            let parts = UTF8ToString($0).split("\n");
+            let gameId = parts[0];
+            let secret = parts[1];
+            document.cookie = gameId + "=" + secret + "; Max-Age=8640000; SameSite=Strict";
+            displaySecret({
+               secret: secret,
+               gameId: gameId,
+               action: () => _receiveButtonClick(
+                  allocate(
+                     intArrayFromString('list'),
+                     ALLOC_NORMAL
+                  )
+               ),
+            });
          }, parameter);
    }
 }

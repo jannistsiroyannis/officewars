@@ -10,7 +10,38 @@
     <div id="app">
       <canvas id="canv" width="800" height="600">
       </canvas>
-      <div id="control"></div>
+      <div class="control"></div>
+
+      <div class="control game hidden" id="gameMenu">
+
+      </div>
+
+      <div class="control menu hidden" id="mainMenu">
+
+      </div>
+
+      <div class="control menu hidden" id="displaySecret">
+        <div class="info">
+          Your accesstoken for this game is: <span class="secret" id="displaySecretSecret"></span>
+          Please save it somewhere or write it down! If you clear you browser cookies, or want to play from another computer, you will need this token to get back into the game!
+        </div>
+        <div class="footer">
+          <button type="button" id="displaySecretConfirm">Done</button>
+        </div>
+      </div>
+
+      <div class="control menu hidden" id="registerFor">
+        <div class="info">Please enter a name and choose a color to join the game.</div>
+        <div class="config">
+          <input type="text" id="registerForName" placeholder="Name" name="name"/><label for="registerForName">Name</label>
+          <input type="color" id="registerForColor" name="color"/><label for="registerForColor">Color</label>
+        </div>
+        <div class="footer">
+          <button type="button" id="registerForConfirm">Join</button>
+          <button type="button" id="registerForCancel">Cancel</button>
+        </div>
+      </div>
+
       <div id="contribute">
         Contribute on <a href="https://github.com/jannistsiroyannis/officewars">Github</a>
       </div>
