@@ -117,10 +117,11 @@ body {
     border: solid 1px #000;
     background: rgba(0, 0, 0, 0.4);
     color: #fff;
-    padding: 15px;
+    padding: 5px;
 }
 
 #contribute > a {
+    display: inline-block;
     pointer-events: all;
     color: #000;
     transition: background-color 0.2s;
