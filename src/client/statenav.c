@@ -67,7 +67,7 @@ static void receiveGames(const char* data, unsigned size)
   <button \
     type=\"button\" \
     onClick=\"_receiveButtonClick(allocate(intArrayFromString('enter %s'), ALLOC_NORMAL))\">\
-      Enter/observ \
+      Enter/observe \
   </button> \
 </div>", game.gameName, game.playerCount, game.id);
 	    break;
