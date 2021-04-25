@@ -30,6 +30,7 @@ struct GameState initatePreGame(const char* gameName)
    state.metaGameState = PREGAME;
    state.gameName = malloc(strlen(gameName)+1);
    strcpy(state.gameName, gameName);
+   state.winningPlayer = UINT_MAX;
 
    return state;
 }
@@ -407,6 +408,9 @@ static void repulsePlayers(struct GameState* state)
 
 void startGame(struct GameState* state)
 {
+   if (state->metaGameState != PREGAME)
+      return;
+   
    state->nodeCount = NODESPERPLAYER * state->playerCount;
    state->metaGameState = INGAME;
    state->adjacencyMatrix = calloc(sizeof(*(state->adjacencyMatrix)),
@@ -578,6 +582,10 @@ void addPlayer(struct GameState* game, const char* name, char* color, const char
 
 void addOrder(struct GameState* game, unsigned type, unsigned from, unsigned to, const char* playerSecret)
 {
+   // Check that the game is in the expected state for new orders
+   if (game->metaGameState != INGAME)
+      return;
+   
    // Check that the player actually owns the "from" system
    unsigned playerId = game->controlledBy[from];
    if ( strcmp(game->playerSecret[playerId], playerSecret) ||
@@ -711,6 +719,7 @@ void serialize(struct GameState* state, unsigned forPlayer, FILE* f)
    fprintf(f, "%s\n", state->id);
    fprintf(f, "%s\n", state->gameName);
    fprintf(f, "%d\n", state->metaGameState);
+   fprintf(f, "%u\n", state->winningPlayer);
    fprintf(f, "%u\n", state->playerCount);
    for (unsigned i = 0; i < state->playerCount; ++i)
    {
@@ -825,6 +834,7 @@ struct GameState deserialize(FILE* f)
    state.gameName = malloc(64);
    fscanf(f, "%63[^\n]\n", state.gameName);
    fscanf(f, "%d\n", &state.metaGameState);
+   fscanf(f, "%u\n", &state.winningPlayer);
    fscanf(f, "%u\n", &state.playerCount);
    state.playerName = malloc(state.playerCount * sizeof(state.playerName[0]));
    state.playerColor = malloc(state.playerCount * sizeof(state.playerColor[0]));

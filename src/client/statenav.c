@@ -72,6 +72,24 @@ static void receiveGames(const char* data, unsigned size)
 </div>", game.gameName, game.playerCount, game.id);
 	    break;
 	 }
+
+         case POSTGAME:
+	 {
+            char* winningName = "INDECIVSIE";
+            if (game.winningPlayer != UINT_MAX)
+               winningName = game.playerName[game.winningPlayer];
+            
+	    fprintf(htmlF, " \
+<div class=\"game-entry\"> \
+  <b>Finished: </b>%s<br/><b>%u</b> players<br/> Won by: %s<br/> \
+  <button \
+    type=\"button\" \
+    onClick=\"_receiveButtonClick(allocate(intArrayFromString('enter %s'), ALLOC_NORMAL))\">\
+      Review history \
+  </button> \
+</div>", game.gameName, game.playerCount, winningName, game.id);
+	    break;
+	 }
       }
 
    }

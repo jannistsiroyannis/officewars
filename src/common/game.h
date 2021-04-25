@@ -8,7 +8,8 @@
 enum MetaGameState
 {
    PREGAME,
-   INGAME
+   INGAME,
+   POSTGAME,
 };
 
 struct Turn
@@ -51,6 +52,8 @@ struct GameState
    char** playerColor;
    
    char** playerSecret;
+
+   unsigned winningPlayer;
 
    // Turns
    unsigned turnCount;

@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include "turnresolution.h"
 #include "game.h"
@@ -52,9 +53,10 @@ static int existsControlledPathTo(struct GameState* game, unsigned from, unsigne
    return existsControlledPathToInt(game, from, to, playerId, visited);
 }
 
-static void resolveTurn(struct GameState* game, unsigned turnIndex)
+static int resolveTurn(struct GameState* game, unsigned turnIndex)
 {
    struct Turn* turn = &game->turn[turnIndex];
+   int gameStateWasChanged = 0;
 
    // Pinning
    unsigned pinned[game->nodeCount];
@@ -129,8 +131,11 @@ static void resolveTurn(struct GameState* game, unsigned turnIndex)
       if (strongestAttackingCandidate != -1 && candidateStrength > defensiveStrength[node])
       {
          game->controlledBy[node] = strongestAttackingPlayer;
+         gameStateWasChanged = 1;
       }
    }
+
+   return gameStateWasChanged;
 }
 
 void tickGame(struct GameState* game)
@@ -157,16 +162,56 @@ void stepGameHistory(struct GameState* game, unsigned targetStep)
    
    unsigned steps = targetStep > game->turnCount-1 ? game->turnCount-1 : targetStep;
 
+   int gameStateWasChanged;
    for (unsigned i = 0; i < steps; ++i)
    {
-      //printf("Stepping simulation, turn: %u\n", i);
-      resolveTurn(game, i);
+      gameStateWasChanged = resolveTurn(game, i);
+   }
+
+   // Test the game state for a winner
+   if (!gameStateWasChanged)
+   {
+      unsigned nodesPerPlayer[game->playerCount];
+      memset(nodesPerPlayer, 0, sizeof(nodesPerPlayer[0]) * game->playerCount);
+      for (unsigned node = 0; node < game->nodeCount; ++node)
+      {
+         if (game->controlledBy[node] != UINT_MAX)
+         {
+            nodesPerPlayer[game->controlledBy[node]]++;
+         }
+      }
+
+      unsigned remainingPlayers = 0;
+      unsigned highestNodeCount = 0;
+      unsigned winningPlayer = UINT_MAX;
+      for (unsigned player = 0; player < game->playerCount; ++player)
+      {
+         if (nodesPerPlayer[player])
+            ++remainingPlayers;
+
+         if (nodesPerPlayer[player] == highestNodeCount)
+         {
+            winningPlayer = UINT_MAX;
+         }
+         else if (nodesPerPlayer[player] > highestNodeCount)
+         {
+            highestNodeCount = nodesPerPlayer[player];
+            winningPlayer = player;
+         }
+      }
+
+      if (remainingPlayers < 3)
+      {
+         // There are now 1 or 2 players remaining, and the game is "locked" (no node changed owner)
+         // This means the game is over.
+         game->metaGameState = POSTGAME;
+         game->winningPlayer = winningPlayer;
+      }
    }
 }
 
 void stepGameHistoryLatest(struct GameState* game)
 {
-   //printf("STEPPING TO LATEST IN GAMESTATE CONTAINING %u TURNS.\n", game->turnCount);
    unsigned targetStep = game->turnCount > 0 ? game->turnCount-1 : 0;
    stepGameHistory(game, targetStep);
 }
