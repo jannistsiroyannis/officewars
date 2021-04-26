@@ -13,7 +13,7 @@ class Player {
         const [
             playerCount,
             ...rest
-        ] = data.split("\n")
+        ] = data
 
         let currentLines = rest
         return Array.from({
@@ -55,7 +55,7 @@ class Node {
         const [
             countString,
             ...dataList
-        ] = data.split("\n")
+        ] = data
         const count = parseInt(countString)
         const couplingMatrix = dataList.slice(0, count)
         const idCouplings = couplingMatrix.flatMap((data, index) => (
@@ -99,8 +99,91 @@ class Node {
     }
 
     static requiredLines(data) {
-        const count = parseInt(data.match(/\d+/)[0])
+        const count = parseInt(data[0])
         return count * 2 + 1
+    }
+}
+
+class Action {
+    constructor({
+        from,
+        to,
+        player,
+        type
+    }) {
+        this.from = from
+        this.to = to
+        this.player = player
+        this.type = type
+    }
+
+    static parse(data, players, nodes) {
+        const roundCount = parseInt(data[0])
+        let position = 1
+        const rounds = []
+        for (let r = 0; r < roundCount; r++) {
+            const actionCount = parseInt(data[position])
+            position += 1
+            const actions = []
+            for (let i = 0; i < actionCount; i++) {
+                const [
+                    playerId,
+                    fromId,
+                    toId,
+                    typeId
+                ] = Array.from({length: 4}).map(
+                    (_, index) => parseInt(data[position + i * 4 + index])
+                )
+                const player = players[playerId]
+                const from = nodes[fromId]
+                const to = nodes[toId]
+                const type = ["attack", "support"][typeId]
+                actions.push(new Action({
+                    player,
+                    from,
+                    to,
+                    type
+                }))
+            }
+            rounds.push(actions)
+            position += actionCount * 4
+        }
+        return rounds
+    }
+
+    static requiredLines(data) {
+        const rounds = parseInt(data[0])
+        let position = 1
+        for (let r = 0; r < rounds; r++) {
+            const actionCount = parseInt(data[position])
+            position += actionCount * 4 + 1
+        }
+        return position
+    }
+}
+
+class State {
+    constructor({
+        ownedBy
+    }) {
+        this.ownedBy = ownedBy
+    }
+
+    static parse(data, players, nodes) {
+        const count = parseInt(data[0])
+        return Array.from({length: count}).map((_, i) => {
+            const ownerIds = data[1 + i].split(",").map(v => parseInt(v))
+            return new State({
+                ownedBy: ownerIds.reduce((acc, id, index) => {
+                    acc.set(nodes[index], players[id])
+                    return acc
+                }, new Map())
+            })
+        })
+    }
+
+    static requiredLines(data) {
+        return parseInt(data[0])
     }
 }
 
@@ -110,13 +193,17 @@ class Game {
         name,
         state,
         players,
-        nodes
+        nodes,
+        rounds,
+        states
     }) {
         this.id = id
         this.name = name
         this.state = state
         this.players = players
         this.nodes = nodes
+        this.rounds = rounds
+        this.states = states
     }
 
 
@@ -127,20 +214,32 @@ class Game {
             state,
             _,
             ...gameContent
-        ] = data.split("\n")
+        ] = data
 
         const playerLines = Player.requiredLines(gameContent[0])
-        const playerData = gameContent.slice(0, playerLines).join("\n")
+        const playerData = gameContent.slice(0, playerLines)
         const players = Player.parse(playerData)
 
         const nodeLines = Node.requiredLines(
-            gameContent[playerLines]
+            [gameContent[playerLines]]
         )
         const nodeData = gameContent.slice(
             playerLines,
             playerLines + nodeLines
-        ).join("\n")
+        )
         const nodes = Node.parse(nodeData)
+
+        const actionData = gameContent.slice(playerLines + nodeLines + nodes.length)
+        const actionLines = Action.requiredLines(actionData)
+        const rounds = Action.parse(actionData, players, nodes)
+        
+        const stateData = gameContent.slice(
+            playerLines + 
+            nodeLines + 
+            nodes.length +
+            actionLines
+        )
+        const states = State.parse(stateData, players, nodes)
 
         return new Game({
             id,
@@ -148,12 +247,14 @@ class Game {
             state,
             players,
             nodes,
+            rounds,
+            states
         })
     }
 
     static async loadGame(url) {
         const data = await (await fetch(url)).text()
-        const game = Game.parse(data)
+        const game = Game.parse(data.split("\n"))
         console.log(game)
         return game
     }
