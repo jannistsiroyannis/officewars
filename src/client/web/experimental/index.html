@@ -117,6 +117,7 @@ async function start() {
             "https://images.unsplash.com/photo-1523447704114-37cea08ee064?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=512&q=80",
         ].map(url => textureLoader.load(url))
         const outlineMaterial = new THREE.MeshBasicMaterial({side: THREE.BackSide})
+        outlineMaterial.color = new THREE.Color("#000000")
         for (const pt of planetTextures) {
             pt.wrapS = THREE.RepeatWrapping;
             pt.wrapT = THREE.RepeatWrapping;
@@ -130,7 +131,10 @@ async function start() {
             0.45
         ]
         const outlineGeometries = planetSizes.map(r => (
-            new THREE.SphereGeometry(r + 0.05, 20, 10)
+            new THREE.SphereGeometry(r + 0.025, 20, 10)
+        ))
+        const containerGeometries = planetSizes.map(r => (
+            new THREE.SphereGeometry(r + 0.175, 20, 10)
         ))
         const ownerGeometries = planetSizes.map(r => (
             new THREE.SphereGeometry(r + 0.15, 20, 10)
@@ -145,6 +149,7 @@ async function start() {
         planets = game.nodes.map((node, nodeId) => {
             const planet = new THREE.Group()
             const owner = lastState.ownedBy.get(node)
+            const selectionMaterial = outlineMaterial.clone()
             if (owner) {
                 const planetOutlineMaterial = outlineMaterial.clone()
                 planetOutlineMaterial.color = new THREE.Color(owner.color)
@@ -152,12 +157,20 @@ async function start() {
                     ownerGeometries[nodeId % planetSizes.length],
                     planetOutlineMaterial
                 )
-                planet.add(ownerView)
+                const container = new THREE.Mesh(
+                    containerGeometries[nodeId % planetSizes.length],
+                    selectionMaterial
+                )
+                container.gameNode = node
+                planet.add(
+                    container,
+                    ownerView
+                )
             }
 
             const selection = new THREE.Mesh(
                 outlineGeometries[nodeId % planetSizes.length],
-                outlineMaterial.clone()
+                selectionMaterial
             )
             selection.gameNode = node
             const core = new THREE.Mesh(
@@ -265,7 +278,7 @@ async function start() {
         ).map(i => i.object)
 
         if (nodeObject) {
-            planets.forEach(p => p.selection.material.color.setRGB(1, 1, 1))
+            planets.forEach(p => p.selection.material.color.setRGB(0, 0, 0))
             nodeObject.material.color.setRGB(1, 0.6, 0.2)
         }
     }
