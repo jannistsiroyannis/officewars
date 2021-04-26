@@ -64,12 +64,13 @@ static void receiveGames(const char* data, unsigned size)
 	    fprintf(htmlF, " \
 <div class=\"game-entry\"> \
   <b>In-game: </b>%s<br/><b>%u</b> players<br/> \
+  <button onClick=\"window.location.href='experimental/?game=%s'\">View world</button>\
   <button \
     type=\"button\" \
     onClick=\"_receiveButtonClick(allocate(intArrayFromString('enter %s'), ALLOC_NORMAL))\">\
       Enter/observe \
   </button> \
-</div>", game.gameName, game.playerCount, game.id);
+</div>", game.gameName, game.playerCount, game.id, game.id);
 	    break;
 	 }
 
