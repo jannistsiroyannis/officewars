@@ -6,6 +6,7 @@
 
 #include "math/vec.h"
 #include "game.h"
+#include "turnresolution.h"
 
 static const unsigned MAXCONNECTIONS = 4;
 static const unsigned MINCONNECTIONS = 3;
@@ -823,7 +824,16 @@ void serialize(struct GameState* state, unsigned forPlayer, FILE* f)
          fprintf(f, "0\n"); // no visible orders this round
       }
    }
+}
 
+void serializeSubstates(struct GameState* state, FILE* f) {
+   fprintf(f, "%u\n", state->turnCount);
+   for (int i = 0; i < state->turnCount; i++) {
+      stepGameHistory(state, i);
+      for (int n = 0; n < state->nodeCount; n++) {
+         fprintf(f, (n == state->nodeCount - 1) ? "%u\n" :  "%u,", state->controlledBy[n]);
+      }
+   }
 }
 
 struct GameState deserialize(FILE* f)

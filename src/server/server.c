@@ -362,6 +362,7 @@ int main (int argc, char** argv)
       
       printf("Content-Type: text/plain\n\n");
       serialize(&game, serializationFor, stdout);
+      serializeSubstates(&game, stdout);
       freeGameState(&game);
    }
    else if (!strncmp(path, "/register", strlen("/register")))
