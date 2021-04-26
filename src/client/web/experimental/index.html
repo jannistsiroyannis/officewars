@@ -132,14 +132,29 @@ async function start() {
         const outlineGeometries = planetSizes.map(r => (
             new THREE.SphereGeometry(r + 0.05, 20, 10)
         ))
+        const ownerGeometries = planetSizes.map(r => (
+            new THREE.SphereGeometry(r + 0.15, 20, 10)
+        ))
         const planetGeometries = planetSizes.map(r => (
             new THREE.SphereGeometry(r, 20, 10)
         ))
         const planetMaterials = planetTextures.map(tex => (
             new THREE.MeshBasicMaterial({ map: tex })
         ))
+        const lastState = game.states[game.states.length - 1]
         planets = game.nodes.map((node, nodeId) => {
             const planet = new THREE.Group()
+            const owner = lastState.ownedBy.get(node)
+            const planetOutlineMaterial = outlineMaterial.clone()
+            if (owner) {
+                planetOutlineMaterial.color = new THREE.Color(owner.color)
+            }
+
+            const ownerView = new THREE.Mesh(
+                ownerGeometries[nodeId % planetSizes.length],
+                planetOutlineMaterial
+            )
+
             const selection = new THREE.Mesh(
                 outlineGeometries[nodeId % planetSizes.length],
                 outlineMaterial.clone()
@@ -150,6 +165,7 @@ async function start() {
                 planetMaterials[nodeId % planetMaterials.length]
             )
             planet.add(
+                ownerView,
                 selection,
                 core,
             )
