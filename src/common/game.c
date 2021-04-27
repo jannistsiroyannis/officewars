@@ -99,7 +99,12 @@ static void ensureAcceptableColor(struct GameState* game, char* color)
       Vec3 black = {0, 0, 0};
       Vec3 randomColor = {rand()%256, rand()%256, rand()%256};
 
-      if (sqrt(V3SqrDist(white, vChosenColor)) < 80.0 || sqrt(V3SqrDist(black, vChosenColor)) < 80.0)
+      Vec3 cp = V3ScalarMult(1.0f / 256.0f, vChosenColor);
+      float luminance = sqrt( 0.299*cp.x*cp.x +
+                              0.587*cp.y*cp.y +
+                              0.114*cp.z*cp.z );
+
+      if (luminance > 0.8f || luminance < 0.2f)
       {
          vChosenColor = randomColor;
          hadToChange = 1;
