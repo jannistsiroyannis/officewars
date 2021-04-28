@@ -196,6 +196,12 @@ void receiveState(const char* data, unsigned size)
 	 {
 	    controlArea.innerHTML += "<input type=\"text\" placeholder=\"Enter secret to rejoin\" id=\"secretInput\" onkeypress=\"javascript: if(event.keyCode == 13){_receiveButtonClick(allocate(intArrayFromString('setsecret ' + event.target.value), ALLOC_NORMAL));}\"/>";
 	 }
+         else
+         {
+            controlArea.innerHTML += "<select> \
+    <option onClick=\"_receiveButtonClick(allocate(intArrayFromString('TEST'), ALLOC_NORMAL))\" \">I got this!</option>";
+            controlArea.innerHTML += "</select>";
+         }
       }, clientState.state.turnCount-1, playerIsAuthed());
 
    clientState.viewingTurn = clientState.state.turnCount-1;

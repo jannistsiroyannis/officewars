@@ -12,6 +12,13 @@ enum MetaGameState
    POSTGAME,
 };
 
+enum OrderType
+{
+   ATTACKORDER = 0,
+   SUPPORTORDER = 1,
+   SURRENDERORDER = 2,
+};
+
 struct Turn
 {
    unsigned orderCount;
@@ -69,7 +76,7 @@ void startGame(struct GameState* state);
 
 void addPlayer(struct GameState* game, const char* name, char* color, const char* playerSecret);
 
-void addOrder(struct GameState* game, unsigned type, unsigned from, unsigned to, const char* playerSecret);
+void addOrder(struct GameState* game, enum OrderType type, unsigned from, unsigned to, const char* playerSecret);
 
 void freeGameState(struct GameState* state);
 

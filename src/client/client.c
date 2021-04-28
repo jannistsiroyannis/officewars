@@ -202,6 +202,19 @@ EM_JS(void, setCookie, (const char* key, const char* value),
 	 document.cookie = UTF8ToString(key) + "=" + UTF8ToString(value) + "; Max-Age=8640000; SameSite=Strict";
       });
 
+void sendOrder(enum OrderType type, unsigned from, unsigned to)
+{
+   char orders[32];
+   char* playerSecret = getCookie(clientState.state.id);	 
+   if (playerSecret)
+   {
+      snprintf(orders, 32, "%d\n%u\n%u\n%s\n%s\n", type, from, to,
+               clientState.state.id, playerSecret);
+      makeAjaxRequest("/cgi-bin/server/orders", "POST", orders, receiveState);
+      free(playerSecret);
+   }
+}
+
 EM_BOOL mouseUp(int eventType, const EmscriptenMouseEvent* mouseEvent, void* userData)
 {
    if (!mouseState.dragging) // not dragging = a left click
@@ -214,19 +227,10 @@ EM_BOOL mouseUp(int eventType, const EmscriptenMouseEvent* mouseEvent, void* use
 	 clientState.nodeFocus = selectedNode;
       } else if (mouseEvent->button == 2) // right button
       {
-	 char orders[32];
-	 char* playerSecret = getCookie(clientState.state.id);	 
-	 if (playerSecret)
-	 {
-	    unsigned type = 0; // attack order
-	    if (mouseEvent->ctrlKey || mouseEvent->altKey || mouseEvent->shiftKey)
-	       type = 1; // support order
-	    snprintf(orders, 32, "%u\n%u\n%u\n%s\n%s\n", type, clientState.nodeFocus, selectedNode,
-		     clientState.state.id, playerSecret);
-	    printf("Sent orders: %s\n", orders);
-	    makeAjaxRequest("/cgi-bin/server/orders", "POST", orders, receiveState);
-	    free(playerSecret);
-	 }
+         enum OrderType type = ATTACKORDER;
+         if (mouseEvent->ctrlKey || mouseEvent->altKey || mouseEvent->shiftKey)
+            type = SUPPORTORDER;
+         sendOrder(type, clientState.nodeFocus, selectedNode);
       }
    }
 

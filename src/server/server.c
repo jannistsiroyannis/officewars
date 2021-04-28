@@ -213,7 +213,7 @@ static void moveRandomAI()
                   getConnectedNodes(&game, node, connected, &connectedCount);
                   unsigned randomTarget = connected[rand() % connectedCount];
 
-                  unsigned type = 0;
+                  unsigned type = ATTACKORDER;
 
                   //printf("Doing order from %u to %u by %u with secret %s\n", node, randomTarget, playerId, secret);
 		  
@@ -396,7 +396,7 @@ int main (int argc, char** argv)
          FILE* f = fmemopen((void*)data, contentLength, "r");
          if (!f)
 	    return 0;
-         unsigned type;
+         enum OrderType type;
          unsigned from;
          unsigned to;
          char gameId[7] = {0};

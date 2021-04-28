@@ -38,4 +38,6 @@ char* getCookie(const char* key); // EM_JS(char*, getCookie, (const char* key)
 
 void setCookie(const char* key, const char* value); // EM_JS(void, setCookie, (const char* key, const char* value)
 
+void sendOrder(enum OrderType type, unsigned from, unsigned to);
+
 #endif

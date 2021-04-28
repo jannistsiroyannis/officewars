@@ -13,7 +13,7 @@ static unsigned countSupporters(struct GameState* game, struct Turn* turn, unsig
    for (unsigned order = 0; order < turn->orderCount; ++order)
    {
       if (turn->toNode[order] == node &&
-	  turn->type[order] == 1 && // support order
+	  turn->type[order] == SUPPORTORDER &&
 	  nodesConnect(game, node, turn->fromNode[order]) &&
 	  !pinned[turn->fromNode[order]])
       {
@@ -63,25 +63,11 @@ static int resolveTurn(struct GameState* game, unsigned turnIndex)
    memset(pinned, 0, sizeof(pinned[0]) * game->nodeCount);
    for (unsigned order = 0; order < turn->orderCount; ++order)
    {
-      if (turn->type[order] == 0 && // attack order
+      if (turn->type[order] == ATTACKORDER &&
 	  nodesConnect(game, turn->fromNode[order], turn->toNode[order]))
       {
          // turn->toNode[order] is under attack, and must now be considered pinned
-         // _unless_ there is a counter-order to attack from there back to turn->fromNode[order]
-         // (a head on collision). In such a case it is resolved as any normal battle.
-         unsigned thereIsACounterOrder = 0;
-         for (unsigned counterOrder = 0; counterOrder < turn->orderCount; ++counterOrder)
-         {
-            if (turn->type[counterOrder] == 0 && // attack order
-                turn->fromNode[counterOrder] == turn->toNode[order] &&
-                turn->toNode[counterOrder] == turn->fromNode[order])
-            {
-               thereIsACounterOrder = 1;
-            }
-         }
-
-         if (!thereIsACounterOrder)
-	    pinned[turn->toNode[order]] = 1;
+         pinned[turn->toNode[order]] = 1;
       }
    }
 
@@ -107,7 +93,7 @@ static int resolveTurn(struct GameState* game, unsigned turnIndex)
       for (unsigned order = 0; order < turn->orderCount; ++order)
       {
          if (turn->toNode[order] == node &&
-             turn->type[order] == 0 && // attack order
+             turn->type[order] == ATTACKORDER &&
              nodesConnect(game, node, turn->fromNode[order]))
          {
             // Judge strength of attack
@@ -134,6 +120,27 @@ static int resolveTurn(struct GameState* game, unsigned turnIndex)
          gameStateWasChanged = 1;
       }
    }
+
+   // Surrenders
+   unsigned allSurrendersDone;
+   do
+   {
+      allSurrendersDone = 1;
+      for (unsigned order = 0; order < turn->orderCount; ++order)
+      {
+         if (turn->type[order] == SURRENDERORDER)
+         {
+            for (unsigned node = 0; node < game->nodeCount; ++node)
+            {
+               if (game->controlledBy[node] == turn->issuingPlayer[order])
+               {
+                  game->controlledBy[node] = turn->toNode[order]; // toNode doubles as "to player" if the order type is SURRENDERORDER
+                  allSurrendersDone = 0;
+               }
+            }
+         }
+      }
+   } while (!allSurrendersDone);
 
    return gameStateWasChanged;
 }

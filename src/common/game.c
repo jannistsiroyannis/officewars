@@ -585,7 +585,7 @@ void addPlayer(struct GameState* game, const char* name, char* color, const char
    strcpy(game->playerSecret[game->playerCount-1], playerSecret);
 }
 
-void addOrder(struct GameState* game, unsigned type, unsigned from, unsigned to, const char* playerSecret)
+void addOrder(struct GameState* game, enum OrderType type, unsigned from, unsigned to, const char* playerSecret)
 {
    // Check that the game is in the expected state for new orders
    if (game->metaGameState != INGAME)
@@ -623,8 +623,8 @@ void addOrder(struct GameState* game, unsigned type, unsigned from, unsigned to,
    turn->type = realloc(turn->type, (turn->orderCount+1) * sizeof(turn->type[0]));
 
    // If the target is "your own", be helpful and convert to a supportorder.
-   if (game->controlledBy[to] == playerId)
-      type = 1;
+   if (game->controlledBy[to] == playerId && type == ATTACKORDER)
+      type = SUPPORTORDER;
 
    // Add the new orders at the end
    turn->issuingPlayer[turn->orderCount] = playerId;
@@ -805,7 +805,7 @@ void serialize(struct GameState* state, unsigned forPlayer, FILE* f)
             fprintf(f, "%u\n", state->turn[state->turnCount-1].issuingPlayer[j]);
             fprintf(f, "%u\n", state->turn[state->turnCount-1].fromNode[j]);
             fprintf(f, "%u\n", state->turn[state->turnCount-1].toNode[j]);
-            fprintf(f, "%u\n", state->turn[state->turnCount-1].type[j]);
+            fprintf(f, "%d\n", state->turn[state->turnCount-1].type[j]);
          }
       }
    }
@@ -822,7 +822,7 @@ void serialize(struct GameState* state, unsigned forPlayer, FILE* f)
                fprintf(f, "%u\n", state->turn[i].issuingPlayer[j]);
                fprintf(f, "%u\n", state->turn[i].fromNode[j]);
                fprintf(f, "%u\n", state->turn[i].toNode[j]);
-               fprintf(f, "%u\n", state->turn[i].type[j]);
+               fprintf(f, "%d\n", state->turn[i].type[j]);
             }
          }
          fprintf(f, "0\n"); // no visible orders this round

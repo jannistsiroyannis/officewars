@@ -187,7 +187,7 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	 var orderPlayers = Module.HEAPU32.subarray($11/4, $11/4 + $10);
 	 var orderFromNodes = Module.HEAPU32.subarray($12/4, $12/4 + $10);
 	 var orderToNodes = Module.HEAPU32.subarray($13/4, $13/4 + $10);
-	 var orderTypes = Module.HEAPU32.subarray($14/4, $14/4 + $10);
+	 var orderTypes = Module.HEAP32.subarray($14/4, $14/4 + $10);
 
 	 //console.log("will now render " + orderCount + " orders.");
 	 
