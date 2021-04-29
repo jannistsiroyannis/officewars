@@ -182,6 +182,33 @@ void receiveState(const char* data, unsigned size)
    
    fclose(f);
 
+   // Generate surrender-to html
+   struct GameState* game = &clientState.state;
+   unsigned nodesPerPlayer[game->playerCount];
+   memset(nodesPerPlayer, 0, sizeof(nodesPerPlayer[0]) * game->playerCount);
+   for (unsigned node = 0; node < game->nodeCount; ++node)
+   {
+      if (game->controlledBy[node] != UINT_MAX)
+      {
+         nodesPerPlayer[game->controlledBy[node]]++;
+      }
+   }
+   char* playerSecret = getCookie(game->id);
+   char surrenderOptionsBuf[512*game->playerCount];
+   unsigned pos = 0;
+   pos += sprintf(surrenderOptionsBuf + pos, "<select>");
+   pos += sprintf(surrenderOptionsBuf + pos, "<option onClick=\"_receiveButtonClick(allocate(intArrayFromString('surrender -1'), ALLOC_NORMAL))\" \">Not surrendering</option>");
+   for (unsigned player = 0; player < game->playerCount; ++player)
+   {
+      // Surviving players that aren't me
+      if (nodesPerPlayer[player] > 0 && strcmp(game->playerSecret[player], playerSecret))
+      {
+         pos += sprintf(surrenderOptionsBuf + pos, "<option onClick=\"_receiveButtonClick(allocate(intArrayFromString('surrender %d'), ALLOC_NORMAL))\" \">Surrender to %s</option>", player, game->playerName[player]);
+      }
+   }
+   pos += sprintf(surrenderOptionsBuf + pos, "/<select>");
+   free(playerSecret);
+   
    // clear the control area
    EM_ASM(
       {
@@ -198,11 +225,9 @@ void receiveState(const char* data, unsigned size)
 	 }
          else
          {
-            controlArea.innerHTML += "<select> \
-    <option onClick=\"_receiveButtonClick(allocate(intArrayFromString('TEST'), ALLOC_NORMAL))\" \">I got this!</option>";
-            controlArea.innerHTML += "</select>";
+            controlArea.innerHTML += UTF8ToString($2);
          }
-      }, clientState.state.turnCount-1, playerIsAuthed());
+      }, clientState.state.turnCount-1, playerIsAuthed(), surrenderOptionsBuf);
 
    clientState.viewingTurn = clientState.state.turnCount-1;
 
@@ -288,6 +313,11 @@ void receiveButtonClick(char* value)
       setCookie(clientState.state.id, secret);
       clientState.viewIsActive = 0;
       gotoState(IN_GAME, clientState.state.id);
+   }
+   else if (!strncmp(value, "surrender ", strlen("surrender ")))
+   {
+      int surrenderTo = strtol(value + strlen("surrender "), NULL, 10);
+      sendOrder(SURRENDERORDER, UINT_MAX, surrenderTo);
    }
 
    free(value);

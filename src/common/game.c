@@ -593,10 +593,13 @@ void addOrder(struct GameState* game, enum OrderType type, unsigned from, unsign
    
    // Check that the player actually owns the "from" system
    unsigned playerId = game->controlledBy[from];
-   if ( strcmp(game->playerSecret[playerId], playerSecret) ||
-        ( !nodesConnect(game, from, to) && game->controlledBy[to] != playerId ) )
+   if (from != UINT_MAX) // Surrender orders use this value as "from", and are exempt
    {
-      return;
+      if ( strcmp(game->playerSecret[playerId], playerSecret) ||
+           ( !nodesConnect(game, from, to) && game->controlledBy[to] != playerId ) )
+      {
+         return;
+      }
    }
        
    struct Turn* turn = &(game->turn[game->turnCount-1]);
