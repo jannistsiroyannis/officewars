@@ -418,9 +418,14 @@ int main (int argc, char** argv)
 
          addOrder(&game, type, from, to, playerSecret);
 
-         unsigned playerId = game.controlledBy[from];
-         if (strcmp(game.playerSecret[playerId], playerSecret))
-            playerId = -2;
+         unsigned playerId = -2;
+         for (unsigned player = 0; player < game.playerCount; ++player)
+         {
+            if (!strcmp(game.playerSecret[player], playerSecret))
+            {
+               playerId = player;
+            }
+         }
 
          printf("Content-Type: text/plain\n\n");
          serialize(&game, playerId, stdout);

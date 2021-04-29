@@ -590,13 +590,25 @@ void addOrder(struct GameState* game, enum OrderType type, unsigned from, unsign
    // Check that the game is in the expected state for new orders
    if (game->metaGameState != INGAME)
       return;
+
+   // Determine ID of player giving order
+   unsigned playerId = UINT_MAX;
+   for (unsigned player = 0; player < game->playerCount; ++player)
+   {
+      if (!strcmp(game->playerSecret[player], playerSecret))
+      {
+         playerId = player;
+      }
+   }
+   if (playerId == UINT_MAX)
+   {
+      return;
+   }
    
    // Check that the player actually owns the "from" system
-   unsigned playerId = game->controlledBy[from];
    if (from != UINT_MAX) // Surrender orders use this value as "from", and are exempt
    {
-      if ( strcmp(game->playerSecret[playerId], playerSecret) ||
-           ( !nodesConnect(game, from, to) && game->controlledBy[to] != playerId ) )
+      if ( playerId != game->controlledBy[from] || !nodesConnect(game, from, to) )
       {
          return;
       }
@@ -626,7 +638,7 @@ void addOrder(struct GameState* game, enum OrderType type, unsigned from, unsign
    turn->type = realloc(turn->type, (turn->orderCount+1) * sizeof(turn->type[0]));
 
    // If the target is "your own", be helpful and convert to a supportorder.
-   if (game->controlledBy[to] == playerId && type == ATTACKORDER)
+   if (type == ATTACKORDER && game->controlledBy[to] == playerId)
       type = SUPPORTORDER;
 
    // Add the new orders at the end
