@@ -1,0 +1,20 @@
+.theme-base {
+    --main-bg: #fff;
+
+    --base-border: #000;
+    --base-fg: #fff;
+    --base-bg: rgba(255, 255, 255, 0.2);
+
+    --control-border: #000;
+    --control-fg: #fff;
+    --control-bg: rgba(64, 64, 64, 0.6);
+
+    --input-border: #000;
+    --input-fg: #fff;
+    --input-bg: rgba(0, 0, 0, 0.6);
+    --input-bg-over: rgba(0, 0, 0, 0.8);
+
+    --entry-fg: #000;
+    --entry-bg: rgba(255, 255, 255, 0.4);
+    --entry-bg-over: rgba(255, 255, 255, 0.6);
+}

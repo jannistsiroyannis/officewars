@@ -3,8 +3,27 @@
 }
 
 body {
-    background: #fff;
+    background: var(--main-bg);
     font-family: Verdana, Geneva, Tahoma, sans-serif;
+
+    --main-bg: #333;
+
+    --base-border: #000;
+    --base-fg: #fff;
+    --base-bg: rgba(255, 255, 255, 0.2);
+
+    --control-border: #000;
+    --control-fg: #fff;
+    --control-bg: rgba(128, 128, 128, 0.6);
+
+    --input-border: #000;
+    --input-fg: #fff;
+    --input-bg: rgba(0, 0, 0, 0.6);
+    --input-bg-over: rgba(0, 0, 0, 0.8);
+
+    --entry-fg: #000;
+    --entry-bg: rgba(255, 255, 255, 0.4);
+    --entry-bg-over: rgba(255, 255, 255, 0.6);
 }
 
 #app {
@@ -13,16 +32,18 @@ body {
     right: 15px;
     width: calc(100% - 30px);
     height: calc(100% - 30px);
-    border: 1px solid #000;
-    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--base-border);
+    background: var(--base-bg);
+}
+
+#theme {
+    position: absolute;
+    top: 15px;
+    right: 15px;
 }
 
 #control {
     position: absolute;
-    padding: 5px;
-    border: 1px solid #000;
-    color: #fff;
-    background: rgba(0, 0, 0, 0.6);
 }
 
 #control.menu {
@@ -36,71 +57,78 @@ body {
     left: 15px;
 }
 
-#control input {
-    border: solid 1px #000;
-    margin-right: 1px;
-    padding: 5px 10px;
-    background: #000;
-    color: #fff;
+.control {
+    padding: 5px;
+    border: 1px solid var(--control-border);
+    color: var(--control-fg);
+    background: var(--control-bg);
 }
 
-#control button {
-    border: solid 1px #000;
-    background-color: rgba(0, 0, 0, 0.6);
-    color: #fff;
+.control input {
+    border: solid 1px var(--input-border);
+    margin-right: 1px;
+    padding: 5px 10px;
+    background: var(--input-bg);
+    color: var(--input-fg);
+}
+
+.control button, .control select {
+    border: solid 1px var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--input-fg);
     transition: background-color 0.2s;
     margin-right: 1px;
     padding: 5px 10px;
 }
 
-#control button:hover {
-    background-color: rgba(0, 0, 0, 0.8);
+.control button:hover, .control select:hover {
+    background-color: var(--input-bg-over);
 }
 
-#control > .game-entry {
+.control > .game-entry {
     padding: 5px 10px;
-    background-color: rgba(255, 255, 255, 0.4);
+    background-color: var(--entry-bg);
     margin-bottom: 5px;
 }
 
-#control > .game-entry:last-child {
+.control > .game-entry:last-child {
     margin: 0;
 }
 
-#control > .game-entry > button {
+.control > .game-entry > button {
     width: 100%;
     margin: 0;
     margin-top: 5px;
 }
 
-#control > .info, #control > .config {
+.control > .info, #control > .config {
     margin-bottom: 5px;
 }
 
-#control > .info, #control > .config {
+.control > .info, #control > .config {
     padding: 0 10px;
 }
 
-#control > .info > .secret {
+.control > .info > .secret {
     display: inline-block;
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--input-bg);
     padding: 5px 20px;
     margin: 0 5px;
     font-size: 80%;
 }
 
-#control > .config > input, #control > .config > label {
+.control > .config > input, #control > .config > label {
     display: inline-block;
     width: calc(50% - 1px);
     padding: 5px 10px;
 }
 
-#control > .footer {
+.control > .footer {
     display: flex;
     flex-direction: row;
 }
 
-#control > .footer > button {
+.control > .footer > button {
     flex: 1;
 }
 
@@ -115,18 +143,18 @@ body {
     position: absolute;
     bottom: 15px;
     right: 15px;
-    border: solid 1px #000;
-    background: rgba(0, 0, 0, 0.6);
-    color: #fff;
+    border: solid 1px var(--input-border);
+    background: var(--input-bg);
+    color: var(--input-fg);
     padding: 5px;
 }
 
 #contribute > a {
     display: inline-block;
     pointer-events: all;
-    color: #000;
+    color: var(--entry-fg);
     transition: background-color 0.2s;
-    background-color: rgba(255, 255, 255, 0.4);
+    background-color: var(--entry-bg);
     padding: 5px 10px;
     text-decoration: none;
     border-radius: 10px;
@@ -134,7 +162,7 @@ body {
 }
 
 #contribute > a:hover {
-    background-color: rgba(255, 255, 255, 0.6);
+    background-color: var(--entry-bg-over);
 }
 
 .hidden {

@@ -3,14 +3,18 @@
     <meta charset="utf-8">
     <title>Office Wars</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="themes/dark.css">
+    <link rel="stylesheet" href="themes/base.css">
   </head>
-  <body>
+  <body class="theme-base" id="main">
     <script src="ui.js"></script>
     <script src="client.js"></script>
     <div id="app">
       <canvas id="canv" width="800" height="600">
       </canvas>
-      <div id="control"></div>
+      <div id="control" class="control"></div>
+      <div id="theme" class="control">
+      </div>
       <div id="contribute">
         Contribute on <a href="https://github.com/jannistsiroyannis/officewars">Github</a>
       </div>
