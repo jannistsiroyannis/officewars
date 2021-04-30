@@ -402,7 +402,7 @@ int main (int argc, char** argv)
          char gameId[7] = {0};
          char playerSecret[7] = {0};
 
-         fscanf(f, "%u\n%u\n%u\n%6[^\n]\n%6[^\n]\n", &type, &from, &to, gameId, playerSecret);
+         fscanf(f, "%d\n%u\n%u\n%6[^\n]\n%6[^\n]\n", &type, &from, &to, gameId, playerSecret);
 	 
          if (!validateId(playerSecret))
          {

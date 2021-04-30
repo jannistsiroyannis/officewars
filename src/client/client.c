@@ -191,7 +191,7 @@ EM_JS(char*, getCookie, (const char* key),
 	    var keyAndVal = cookieprops[i].split("=");
 	    if (keyAndVal.length == 2 && keyAndVal[0].trim() == gameId.trim())
 	    {
-	       return allocate(intArrayFromString(keyAndVal[1]), ALLOC_NORMAL);
+               return allocate(intArrayFromString(keyAndVal[1]), ALLOC_NORMAL);
 	    }
 	 }
 	 return 0;
@@ -204,12 +204,13 @@ EM_JS(void, setCookie, (const char* key, const char* value),
 
 void sendOrder(enum OrderType type, unsigned from, unsigned to)
 {
-   char orders[32];
+   char orders[64];
    char* playerSecret = getCookie(clientState.state.id);	 
    if (playerSecret)
    {
-      snprintf(orders, 32, "%d\n%u\n%u\n%s\n%s\n", type, from, to,
+      snprintf(orders, 64, "%d\n%u\n%u\n%s\n%s\n", type, from, to,
                clientState.state.id, playerSecret);
+
       makeAjaxRequest("/cgi-bin/server/orders", "POST", orders, receiveState);
       free(playerSecret);
    }
