@@ -194,6 +194,10 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	 var order;
 	 for (order = 0; order < orderCount; order++)
 	 {
+            // Surrender orders are not renderd
+            if (orderTypes[order] == 2)
+               continue;
+            
 	    var x1 = nodes[orderFromNodes[order]*3+0];
 	    var y1 = nodes[orderFromNodes[order]*3+1];
 	    var z1 = nodes[orderFromNodes[order]*3+2];

@@ -160,74 +160,107 @@ static int playerIsAuthed()
 
 void receiveState(const char* data, unsigned size)
 {
-   FILE* f = fmemopen((void*)data, size, "r");
-   if (!f)
-      return;
-
-   if (clientState.state.nodeCount)
+   // Deserialize game state
    {
-      freeGameState(&clientState.state);
-      free(clientState.nodeScreenPositions);
-      free(clientState.edgeBuffer);
-   }
+      FILE* f = fmemopen((void*)data, size, "r");
+
+      if (!f)
+         return;
    
-   clientState.state = deserialize(f);
-   stepGameHistoryLatest(&clientState.state);
+      if (clientState.state.nodeCount)
+      {
+         freeGameState(&clientState.state);
+         free(clientState.nodeScreenPositions);
+         free(clientState.edgeBuffer);
+      }
+   
+      clientState.state = deserialize(f);
+      stepGameHistoryLatest(&clientState.state);
 	 
-   clientState.nodeScreenPositions = malloc(sizeof(*(clientState.nodeScreenPositions)) *
-					    clientState.state.nodeCount);
+      clientState.nodeScreenPositions = malloc(sizeof(*(clientState.nodeScreenPositions)) *
+                                               clientState.state.nodeCount);
 
-   clientState.edgeBuffer = malloc(sizeof(*(clientState.edgeBuffer)) *
-				   clientState.state.nodeCount);
+      clientState.edgeBuffer = malloc(sizeof(*(clientState.edgeBuffer)) *
+                                      clientState.state.nodeCount);
    
-   fclose(f);
+      fclose(f);
+   }
 
-   // Generate surrender-to html
-   struct GameState* game = &clientState.state;
-   unsigned nodesPerPlayer[game->playerCount];
-   memset(nodesPerPlayer, 0, sizeof(nodesPerPlayer[0]) * game->playerCount);
-   for (unsigned node = 0; node < game->nodeCount; ++node)
+   // Construct control panel
    {
-      if (game->controlledBy[node] != UINT_MAX)
+      struct GameState* game = &clientState.state;
+      char* playerSecret = getCookie(game->id);
+
+      // Find our player ID
+      unsigned playerId;
+      for (unsigned player = 0; player < game->playerCount; ++player)
       {
-         nodesPerPlayer[game->controlledBy[node]]++;
+         if (!strcmp(game->playerSecret[player], playerSecret))
+            playerId = player;
       }
-   }
-   char* playerSecret = getCookie(game->id);
-   char surrenderOptionsBuf[512*game->playerCount];
-   unsigned pos = 0;
-   pos += sprintf(surrenderOptionsBuf + pos, "<select>");
-   pos += sprintf(surrenderOptionsBuf + pos, "<option onClick=\"_receiveButtonClick(allocate(intArrayFromString('surrender -1'), ALLOC_NORMAL))\" \">Not surrendering</option>");
-   for (unsigned player = 0; player < game->playerCount; ++player)
-   {
-      // Surviving players that aren't me
-      if (nodesPerPlayer[player] > 0 && strcmp(game->playerSecret[player], playerSecret))
+
+      // Find pre-existing surrenderorders, if any
+      struct Turn* turn = & game->turn[game->turnCount-1];
+      unsigned surrenderingTo = UINT_MAX; // = not surrendering
+      for (unsigned order = 0; order < turn->orderCount; ++order)
       {
-         pos += sprintf(surrenderOptionsBuf + pos, "<option onClick=\"_receiveButtonClick(allocate(intArrayFromString('surrender %d'), ALLOC_NORMAL))\" \">Surrender to %s</option>", player, game->playerName[player]);
-      }
-   }
-   pos += sprintf(surrenderOptionsBuf + pos, "/<select>");
-   free(playerSecret);
-   
-   // clear the control area
-   EM_ASM(
-      {
-	 var controlArea = document.getElementById("control");
-	 controlArea.innerHTML = "<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Game selection</button>";
-	 controlArea.innerHTML += "&nbsp;<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('historyp'), ALLOC_NORMAL))\">&lt</button>";
-	 controlArea.innerHTML += "<input type=\"text\" id=\"turnInput\" size=\"4\" value=\"" + $0 + "\"/>";
-	 controlArea.innerHTML += "<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('historyn'), ALLOC_NORMAL))\">&gt</button>";
-	 controlArea.innerHTML += "<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('historyl'), ALLOC_NORMAL))\">&gt&gt</button>";
-	 controlArea.innerHTML += "<button type=\"button\" onClick=\"window.open('rules.html');\">Read rules</button>";
-	 if ($1 == 0)
-	 {
-	    controlArea.innerHTML += "<input type=\"text\" placeholder=\"Enter secret to rejoin\" id=\"secretInput\" onkeypress=\"javascript: if(event.keyCode == 13){_receiveButtonClick(allocate(intArrayFromString('setsecret ' + event.target.value), ALLOC_NORMAL));}\"/>";
-	 }
-         else
+         if ( turn->issuingPlayer[order] == playerId && turn->type[order] == SURRENDERORDER )
          {
-            controlArea.innerHTML += UTF8ToString($2);
+            surrenderingTo = turn->toNode[order];
          }
-      }, clientState.state.turnCount-1, playerIsAuthed(), surrenderOptionsBuf);
+      }
+
+      // Generate surrender-to html
+      unsigned nodesPerPlayer[game->playerCount];
+      memset(nodesPerPlayer, 0, sizeof(nodesPerPlayer[0]) * game->playerCount);
+      for (unsigned node = 0; node < game->nodeCount; ++node)
+      {
+         if (game->controlledBy[node] != UINT_MAX)
+         {
+            nodesPerPlayer[game->controlledBy[node]]++;
+         }
+      }
+      char surrenderOptionsBuf[512*game->playerCount];
+      unsigned pos = 0;
+      pos += sprintf(surrenderOptionsBuf + pos, "<select>");
+      if (surrenderingTo == UINT_MAX)
+         pos += sprintf(surrenderOptionsBuf + pos, "<option onClick=\"_receiveButtonClick(allocate(intArrayFromString('surrender -1'), ALLOC_NORMAL))\" selected=\"selected\">Not surrendering</option>");
+      else
+         pos += sprintf(surrenderOptionsBuf + pos, "<option onClick=\"_receiveButtonClick(allocate(intArrayFromString('surrender -1'), ALLOC_NORMAL))\" >Not surrendering</option>");
+      for (unsigned player = 0; player < game->playerCount; ++player)
+      {
+         // Surviving players that aren't me
+         if (nodesPerPlayer[player] > 0 && strcmp(game->playerSecret[player], playerSecret))
+         {
+            if (surrenderingTo == player)
+               pos += sprintf(surrenderOptionsBuf + pos, "<option onClick=\"_receiveButtonClick(allocate(intArrayFromString('surrender %d'), ALLOC_NORMAL))\" selected=\"selected\">Surrender to %s</option>", player, game->playerName[player]);
+            else
+               pos += sprintf(surrenderOptionsBuf + pos, "<option onClick=\"_receiveButtonClick(allocate(intArrayFromString('surrender %d'), ALLOC_NORMAL))\" >Surrender to %s</option>", player, game->playerName[player]);
+         }
+      }
+      pos += sprintf(surrenderOptionsBuf + pos, "/<select>");
+      free(playerSecret);
+   
+      // Reset the control area
+      EM_ASM(
+         {
+            var controlArea = document.getElementById("control");
+            controlArea.innerHTML = "<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Game selection</button>";
+            controlArea.innerHTML += "&nbsp;<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('historyp'), ALLOC_NORMAL))\">&lt</button>";
+            controlArea.innerHTML += "<input type=\"text\" id=\"turnInput\" size=\"4\" value=\"" + $0 + "\"/>";
+            controlArea.innerHTML += "<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('historyn'), ALLOC_NORMAL))\">&gt</button>";
+            controlArea.innerHTML += "<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('historyl'), ALLOC_NORMAL))\">&gt&gt</button>";
+            controlArea.innerHTML += "&nbsp;<button type=\"button\" onClick=\"window.open('rules.html');\">Read rules</button>&nbsp;";
+            if ($1 == 0)
+            {
+               controlArea.innerHTML += "<input type=\"text\" placeholder=\"Enter secret to rejoin\" id=\"secretInput\" onkeypress=\"javascript: if(event.keyCode == 13){_receiveButtonClick(allocate(intArrayFromString('setsecret ' + event.target.value), ALLOC_NORMAL));}\"/>";
+            }
+            else
+            {
+               controlArea.innerHTML += UTF8ToString($2);
+            }
+         }, clientState.state.turnCount-1, playerIsAuthed(), surrenderOptionsBuf);
+   }
 
    clientState.viewingTurn = clientState.state.turnCount-1;
 
