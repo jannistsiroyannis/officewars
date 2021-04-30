@@ -585,6 +585,42 @@ void addPlayer(struct GameState* game, const char* name, char* color, const char
    strcpy(game->playerSecret[game->playerCount-1], playerSecret);
 }
 
+static void addSurrenderOrder(struct GameState* game, unsigned toPlayerId, unsigned surrenderingPlayerId)
+{
+   struct Turn* turn = &(game->turn[game->turnCount-1]);
+   
+   // Remove any other surrender orders from that same player
+   for (unsigned i = 0; i < turn->orderCount; ++i)
+   {
+      if (turn->issuingPlayer[i] == surrenderingPlayerId && turn->type[i] == SURRENDERORDER)
+      {
+         unsigned remaining = turn->orderCount - i - 1;
+         memmove(&(turn->issuingPlayer[i]), &(turn->issuingPlayer[i+1]), remaining * sizeof(turn->issuingPlayer[0]));
+         memmove(&(turn->fromNode[i]), &(turn->fromNode[i+1]), remaining * sizeof(turn->fromNode[0]));
+         memmove(&(turn->toNode[i]), &(turn->toNode[i+1]), remaining * sizeof(turn->toNode[0]));
+         memmove(&(turn->type[i]), &(turn->type[i+1]), remaining * sizeof(turn->type[0]));
+         --(turn->orderCount);
+         break;
+      }
+   }
+
+   if (toPlayerId != UINT_MAX)
+   {
+      // resize orders arrays
+      turn->issuingPlayer = realloc(turn->issuingPlayer, (turn->orderCount+1) * sizeof(turn->issuingPlayer[0]));
+      turn->fromNode = realloc(turn->fromNode, (turn->orderCount+1) * sizeof(turn->fromNode[0]));
+      turn->toNode = realloc(turn->toNode, (turn->orderCount+1) * sizeof(turn->toNode[0]));
+      turn->type = realloc(turn->type, (turn->orderCount+1) * sizeof(turn->type[0]));
+
+      // Add the new orders at the end
+      turn->issuingPlayer[turn->orderCount] = surrenderingPlayerId;
+      turn->fromNode[turn->orderCount] = UINT_MAX;
+      turn->toNode[turn->orderCount] = toPlayerId;
+      turn->type[turn->orderCount] = SURRENDERORDER;
+      turn->orderCount++;
+   }
+}
+
 void addOrder(struct GameState* game, enum OrderType type, unsigned from, unsigned to, const char* playerSecret)
 {
    // Check that the game is in the expected state for new orders
@@ -604,14 +640,17 @@ void addOrder(struct GameState* game, enum OrderType type, unsigned from, unsign
    {
       return;
    }
+
+   if (type == SURRENDERORDER)
+   {
+      addSurrenderOrder(game, to, playerId);
+      return;
+   }
    
    // Check that the player actually owns the "from" system
-   if (from != UINT_MAX) // Surrender orders use this value as "from", and are exempt
+   if ( playerId != game->controlledBy[from] || !nodesConnect(game, from, to) )
    {
-      if ( playerId != game->controlledBy[from] || !nodesConnect(game, from, to) )
-      {
-         return;
-      }
+      return;
    }
        
    struct Turn* turn = &(game->turn[game->turnCount-1]);
