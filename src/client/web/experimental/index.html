@@ -16,6 +16,11 @@
 body {
     padding: 0;
     margin: 0;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 #play-button {
@@ -53,17 +58,77 @@ body {
 #play-button:hover::after {
     border-left: 12px solid #000;
 }
+
+#leader-board {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+}
+
+#leader-board > .entry {
+    position: relative;
+    display: block;
+    width: 150px;
+    color: #fff;
+    padding: 10px;
+    margin-bottom: 5px;
+    background-color: rgba(0, 0, 0, 0.6);
+    transition: background-color 0.2s, color 0.2s;
+}
+#leader-board > .entry:hover {
+    color: #000;
+    background-color: rgba(255, 255, 255, 0.6);
+} 
+#leader-board > .entry > .dot {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 10px;
+    vertical-align: middle;
+    border: solid 2px rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    background-color: #f00;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+#leader-board > .entry:hover > .dot {
+    border-color: rgba(0, 0, 0, 0.6);
+    background-color: #f00;
+}
+#leader-board > .entry > .points {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: calc(100% + 5px);
+    height: 100%;
+    padding: 10px;
+    color: #000;
+    background-color: rgba(255, 255, 255, 0.6);
+}
 </style>
     </head>
     <body>
-        <div id="app" :class="{visible}" ref="content">
-            
+        <div id="app">
+            <div id="leader-board">
+            </div>
         </div>
     </body>
     <script>
 function playMusic() {
     const music = document.getElementById("bg-music")
     music.play()
+}
+function showPlayers(game) {
+    const lb = document.getElementById("leader-board")
+    const playerPoints = game.players.map(player => [
+        player,
+        Array.from(
+            game.states[game.states.length - 1].ownedBy.values()
+        ).filter(v => v === player).length
+    ]).sort(([a, ap], [b, bp]) => bp - ap)
+    const content = playerPoints.map(([player, points]) => (
+        `<div class="entry"><span class="dot" style="background-color:${player.color}"></span>${player.name}<span class="points">${points}</span></div>`
+    )).join("\n")
+    lb.innerHTML = content
 }
 async function start() {
     const queryString = window.location.search
@@ -79,13 +144,14 @@ async function start() {
     let connectionTextures = [];
     let planets = []
 
-    init();
-    animate();
+    init()
+    animate()
+    showPlayers(game)
 
     function init() {
 
-        camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 )
+        scene = new THREE.Scene()
 
         const center = game.nodes.map(n => n.position).reduce(
             (acc, p) => acc.map((v, i) => v + p[i])
