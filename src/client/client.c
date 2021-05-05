@@ -16,6 +16,7 @@
 struct MouseState
 {
    unsigned dragging;
+   unsigned dragDist;
    long lastTargetX;
    long lastTargetY;
 } mouseState = {0};
@@ -168,6 +169,8 @@ EM_BOOL mouseMove(int eventType, const EmscriptenMouseEvent* mouseEvent, void* u
    if (mouseEvent->buttons)
    {
       mouseState.dragging = 1;
+      mouseState.dragDist += abs(mouseEvent->targetY - mouseState.lastTargetY);
+      mouseState.dragDist += abs(mouseEvent->targetX - mouseState.lastTargetX);
    }
    
    if (mouseEvent->buttons & 0x1)
@@ -218,7 +221,7 @@ void sendOrder(enum OrderType type, unsigned from, unsigned to)
 
 EM_BOOL mouseUp(int eventType, const EmscriptenMouseEvent* mouseEvent, void* userData)
 {
-   if (!mouseState.dragging) // not dragging = a left click
+   if (!mouseState.dragging || mouseState.dragDist < 4) // not dragging = a left click
    {
       Vec2 clickPos = { (float) mouseEvent->targetX, (float) mouseEvent->targetY };
       unsigned selectedNode = getNodeNearestClick(clickPos);
@@ -236,6 +239,7 @@ EM_BOOL mouseUp(int eventType, const EmscriptenMouseEvent* mouseEvent, void* use
    }
 
    mouseState.dragging = 0;
+   mouseState.dragDist = 0;
    return 1;
 }
 
