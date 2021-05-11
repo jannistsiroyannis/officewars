@@ -38,7 +38,6 @@ function setTheme(themeId) {
         body.classList.remove("theme-" + t)
     }
     body.classList.add("theme-" + themeId)
-    localStorage.setItem("themeId", themeId)
 }
 
 function handleSetTheme(e) {
@@ -53,7 +52,6 @@ function start() {
             e.preventDefault();
         }
     });
-    setTheme(localStorage.getItem("themeId") || themes[0])
 
     window.onresize = function () {
         resize();

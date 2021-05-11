@@ -429,9 +429,9 @@ Please confirm game start. Once the game has started, new players will no longer
             }
 	 
             controlArea.innerHTML = "\
-<div class=\"info\">Please enter a name and choose a color to join the game.</div>\
+<div class=\"info\">Enter a name for your galactic empire and choose a color for your banner. Do NOT use a name that can identify you as a person.</div>\
 <div class=\"config\">\
-<input type=\"text\" id=\"playerName\" placeholder=\"Name\" name=\"name\"/><label for=\"playerName\">Name</label>\
+<input type=\"text\" id=\"playerName\" placeholder=\"Solar republic\" name=\"name\"/><label for=\"playerName\">Name of your empire</label>\
 <input type=\"color\" id=\"playerColor\" name=\"color\" value=\""+colorPreset+"\"/><label for=\"playerColor\">Color</label>\
 </div>\
 <div class=\"footer\">\
@@ -451,8 +451,8 @@ Please confirm game start. Once the game has started, new players will no longer
             document.cookie = gameId + "=" + secret + "; Max-Age=8640000; SameSite=Strict"; 
             controlArea.innerHTML = " \
 <div class=\"info\">\
-Your accesstoken for this game is: <span class=\"secret\">" + secret + "</span>\
-Please save it somewhere or write it down! If you clear you browser cookies, or want to play from another computer, you will need this token to get back into the game!\
+Your accesstoken for this game is: <span class=\"secret\">" + secret + "</span> \
+Please save it, or write it down! You will need to enter this token every time you come to this site to give your orders.\
 </div>\
 <div class=\"footer\">\
 <button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Done</button>\

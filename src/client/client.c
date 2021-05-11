@@ -202,7 +202,7 @@ EM_JS(char*, getCookie, (const char* key),
 
 EM_JS(void, setCookie, (const char* key, const char* value),
       {
-	 document.cookie = UTF8ToString(key) + "=" + UTF8ToString(value) + "; Max-Age=8640000; SameSite=Strict";
+	 document.cookie = UTF8ToString(key) + "=" + UTF8ToString(value) + "; SameSite=Strict";
       });
 
 void sendOrder(enum OrderType type, unsigned from, unsigned to)
