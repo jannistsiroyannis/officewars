@@ -648,7 +648,7 @@ void addOrder(struct GameState* game, enum OrderType type, unsigned from, unsign
    }
    
    // Check that the player actually owns the "from" system
-   if ( playerId != game->controlledBy[from] || !nodesConnect(game, from, to) )
+   if ( playerId != game->controlledBy[from] || (!nodesConnect(game, from, to) && from != to) )
    {
       return;
    }
