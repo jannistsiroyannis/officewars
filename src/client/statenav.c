@@ -222,20 +222,20 @@ void receiveState(const char* data, unsigned size)
       }
       char surrenderOptionsBuf[512*game->playerCount];
       unsigned pos = 0;
-      pos += sprintf(surrenderOptionsBuf + pos, "<select>");
+      pos += sprintf(surrenderOptionsBuf + pos, "<select onchange=\"_receiveButtonClick(allocate(intArrayFromString('surrender '+this.value), ALLOC_NORMAL))\">");
       if (surrenderingTo == UINT_MAX)
-         pos += sprintf(surrenderOptionsBuf + pos, "<option onClick=\"_receiveButtonClick(allocate(intArrayFromString('surrender -1'), ALLOC_NORMAL))\" selected=\"selected\">Not surrendering</option>");
+         pos += sprintf(surrenderOptionsBuf + pos, "<option selected=\"selected\" value=\"-1\">Not surrendering</option>");
       else
-         pos += sprintf(surrenderOptionsBuf + pos, "<option onClick=\"_receiveButtonClick(allocate(intArrayFromString('surrender -1'), ALLOC_NORMAL))\" >Not surrendering</option>");
+         pos += sprintf(surrenderOptionsBuf + pos, "<option value=\"-1\">Not surrendering</option>");
       for (unsigned player = 0; player < game->playerCount; ++player)
       {
          // Surviving players that aren't me
          if (nodesPerPlayer[player] > 0 && strcmp(game->playerSecret[player], playerSecret))
          {
             if (surrenderingTo == player)
-               pos += sprintf(surrenderOptionsBuf + pos, "<option onClick=\"_receiveButtonClick(allocate(intArrayFromString('surrender %d'), ALLOC_NORMAL))\" selected=\"selected\">Surrender to %s</option>", player, game->playerName[player]);
+               pos += sprintf(surrenderOptionsBuf + pos, "<option value=\"%d\" selected=\"selected\">Surrender to %s</option>", player, game->playerName[player]);
             else
-               pos += sprintf(surrenderOptionsBuf + pos, "<option onClick=\"_receiveButtonClick(allocate(intArrayFromString('surrender %d'), ALLOC_NORMAL))\" >Surrender to %s</option>", player, game->playerName[player]);
+               pos += sprintf(surrenderOptionsBuf + pos, "<option value=\"%d\">Surrender to %s</option>", player, game->playerName[player]);
          }
       }
       pos += sprintf(surrenderOptionsBuf + pos, "/<select>");
