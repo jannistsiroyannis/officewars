@@ -448,14 +448,13 @@ Please confirm game start. Once the game has started, new players will no longer
             var parts = UTF8ToString($0).split("\n");
             var gameId = parts[0];
             var secret = parts[1];
-            document.cookie = gameId + "=" + secret + "; Max-Age=8640000; SameSite=Strict"; 
             controlArea.innerHTML = " \
 <div class=\"info\">\
-Your accesstoken for this game is: <span class=\"secret\">" + secret + "</span> \
-Please save it, or write it down! You will need to enter this token every time you come to this site to give your orders.\
+Your access token for this game is: <span class=\"secret\">" + secret + "</span> \
+Please save it, or write it down! When you click the button below, this token and the ID of the game you joined (but nothing else) will be stored in a persistent first party cookie (for 60 days) in your browser. The game cannot function without this cookie. If you do not wish such a cookie to be set, please close this window without clicking the button below. You will need to re-enter this token to get back into the game if your cookie is lost or if you wish to play from another device.\
 </div>\
 <div class=\"footer\">\
-<button type=\"button\" onClick=\"_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">Done</button>\
+<button type=\"button\" onClick=\"setCookieSecret('"+gameId+"', '"+secret+"');_receiveButtonClick(allocate(intArrayFromString('list'), ALLOC_NORMAL))\">I'm done, write my token to a cookie!</button> \
 </div>";
          }, parameter);
    }

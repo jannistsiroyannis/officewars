@@ -58,3 +58,7 @@ function start() {
     };
     resize();
 }
+
+function setCookieSecret(key, value) {
+    document.cookie = key + "=" + value + "; Max-Age=5184000; SameSite=Strict";
+}
