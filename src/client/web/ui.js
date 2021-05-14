@@ -41,7 +41,11 @@ function setTheme(themeId) {
 }
 
 function handleSetTheme(e) {
-    setTheme(e.target.value)
+    const themeId = e.target.value
+    const urlParams = new URLSearchParams(window.location.search)
+    urlParams.set("theme", themeId)
+    history.pushState(null, null, "?" + urlParams.toString())
+    setTheme(themeId)
 }
 
 function start() {
@@ -52,6 +56,9 @@ function start() {
             e.preventDefault();
         }
     });
+    const urlParams = new URLSearchParams(window.location.search)
+    const themeId = urlParams.get("theme")
+    setTheme(themeId || themes[0])
 
     window.onresize = function () {
         resize();
