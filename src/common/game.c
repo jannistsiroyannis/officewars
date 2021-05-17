@@ -9,7 +9,7 @@
 
 static const unsigned MAXCONNECTIONS = 4;
 static const unsigned MINCONNECTIONS = 3;
-static const unsigned NODESPERPLAYER = 5;
+static const unsigned NODESPERPLAYER = 7;
 
 static void disconnectNodes(struct GameState* state, unsigned a, unsigned b)
 {
@@ -242,169 +242,90 @@ static unsigned topologicalDistance(struct GameState* state, unsigned a, unsigne
    return -1;
 }
 
-static unsigned getPartitionSizeWithoutNode(struct GameState* state, unsigned node, unsigned nodeToRemove, unsigned* visited)
+static unsigned distanceToClosestEnemy(struct GameState* state, unsigned a)
 {
-   unsigned connected[MAXCONNECTIONS];
-   unsigned connectedCount = 0;
-   getConnectedNodes(state, node, connected, &connectedCount);
-      
-   visited[node] = 1;
-   unsigned count = 1;
-   for (unsigned i = 0; i < connectedCount; ++i)
-   {
-      unsigned candidate = connected[i];
-      if (candidate != nodeToRemove &&
-          !visited[candidate] &&
-          state->controlledByInitial[node] == state->controlledByInitial[candidate])
-      {
-         count += getPartitionSizeWithoutNode(state, candidate, nodeToRemove, visited);
-      }   
-   }
-   return count;
-}
-
-static unsigned removalWouldSplitPartition(struct GameState* state, unsigned nodeToRemove, unsigned partitionSize)
-{
-   unsigned connected[MAXCONNECTIONS];
-   unsigned connectedCount = 0;
-   getConnectedNodes(state, nodeToRemove, connected, &connectedCount);
-
-   // Find a start node other than nodeToRemove
-   unsigned node = UINT_MAX;
-   for (unsigned i = 0; i < connectedCount; ++i)
-   {
-      unsigned n = connected[i];
-      if (state->controlledByInitial[nodeToRemove] == state->controlledByInitial[n])
-      {
-         node = n;
-         break;
-      }
-   }
-   if (node == UINT_MAX)
-      return 1; // Partition of size 1.. would make no sense
-
-   // Do DFS from 'node', expect to find partitionSize-1 nodes. Any less, and this removal would result in a split
+   // Do BFS for shortest distance between a and enemies.
+   unsigned queue[state->nodeCount];
    unsigned visited[state->nodeCount];
    memset(visited, 0, sizeof(visited[0]) * state->nodeCount);
-   unsigned partitionSizeWhenRemoved = getPartitionSizeWithoutNode(state, node, nodeToRemove, visited);
-   if (partitionSizeWhenRemoved == partitionSize-1)
-      return 0;
-   return 1;
-}
+   unsigned head = 0, tail = 0, depth = 0, remainingAtDepth = 1;
+   unsigned player = state->controlledByInitial[a];
 
-static void partitionGraph(struct GameState* state)
-{
-   // The idea is assign each player (but one) one node each. and the final player
-   // the rest. These are now the partitions (player territories).
-   // From here we can let small partitions "steal" nodes along any edges,
-   // as long as the partition being stolen from is larger.
-   // Keep doing this, until all partitions are roughly equal in size.
-
-   unsigned partitionCount = state->playerCount;
-   unsigned partitionSize[partitionCount];
-   memset(partitionSize, 0, sizeof(partitionSize[0]) * partitionCount);
-   unsigned* belongsToPartition = state->controlledByInitial;
-   memset(belongsToPartition, 0, sizeof(belongsToPartition[0]) * state->nodeCount);
-   
-   // Set initial partitions
-   for (unsigned player = 1; player < state->playerCount; ++player)
-   {
-      belongsToPartition[player] = player;
-      partitionSize[player] = 1;
-   }
-   partitionSize[0] = state->nodeCount - (state->playerCount-1);
-
-   // Fight!
+   // For getConnected
    unsigned connected[MAXCONNECTIONS];
    unsigned connectedCount = 0;
-   unsigned movement = 1;
-   unsigned iterationsDone = 0;
-   while(movement)
+   
+   queue[head++] = a;
+   visited[a] = 1;
+   while (head != tail)
    {
-      ++iterationsDone;
-      if (iterationsDone >= 200) // Sometimes you just gotta give it up..
-         break;
-         
-      movement = 0;
-      for (unsigned node = 0; node < state->nodeCount; ++node)
+      // Get a node from queue
+      unsigned node = queue[tail];
+      if (++tail == state->nodeCount) tail = 0;
+
+      // If we've found an enemy, we're done
+      unsigned nodeOwner = state->controlledByInitial[node];
+      if (nodeOwner != UINT_MAX && nodeOwner != player)
       {
-         getConnectedNodes(state, node, connected, &connectedCount);
-         for (unsigned i = 0; i < connectedCount; ++i)
-         {
-            unsigned candidate = connected[i];
-            
-            unsigned candidatePartition = belongsToPartition[candidate];
-            unsigned nodePartition = belongsToPartition[node];
-            if (candidatePartition != nodePartition &&
-                partitionSize[candidatePartition] > partitionSize[nodePartition] &&
-                !removalWouldSplitPartition(state, candidate, partitionSize[candidatePartition]))
-            {
-               // Steal!
-               belongsToPartition[candidate] = nodePartition;
-               partitionSize[candidatePartition]--;
-               partitionSize[nodePartition]++;
-               movement = 1;
-               //fprintf(stderr, "Stole %u from player %u, to player %u\n", candidate, candidatePartition, nodePartition);
-            }
-         }
+         return depth;
+      }
+      
+      // Put all not already visited connections in the queue
+      getConnectedNodes(state, node, connected, &connectedCount);
+      for (unsigned i = 0; i < connectedCount; ++i)
+      {
+         if (visited[connected[i]])
+	    continue;
+         visited[connected[i]] = 1;
+	 
+         queue[head] = connected[i];
+         if (++head == state->nodeCount) head = 0;
+      }
+
+      if (--remainingAtDepth == 0)
+      {
+         ++depth;
+         if (head > tail)
+	    remainingAtDepth = head - tail;
+         else
+	    remainingAtDepth = head + state->nodeCount - tail;
       }
    }
-}
 
-static unsigned bordersToEnemy(struct GameState* state, unsigned node, unsigned player)
-{
-   unsigned connected[MAXCONNECTIONS];
-   unsigned connectedCount = 0;
-   getConnectedNodes(state, node, connected, &connectedCount);
-   for (unsigned i = 0; i < connectedCount; ++i)
-   {
-      unsigned candidate = connected[i];
-      unsigned candidatePlayer = state->controlledByInitial[candidate];
-
-      if (candidatePlayer != -1 && candidatePlayer != player)
-         return 1;
-   }
-   return 0;
+   // Should never be reached, unless there are no enemies to be found
+   return -1;
 }
 
 static void repulsePlayers(struct GameState* state)
 {
-   unsigned connected[MAXCONNECTIONS];
-   unsigned connectedCount = 0;
-   unsigned better[MAXCONNECTIONS];
-   unsigned betterCount = 0;
-   unsigned movement = 1;
-   unsigned iterationsDone = 0;
-   while(movement)
-   {
-      ++iterationsDone;
-      if (iterationsDone >= 200) // Sometimes you just gotta give it up..
-         break;
-         
-      movement = 0;
+   for (unsigned iterations = 0; iterations < 10; ++iterations)
+   {         
       for (unsigned node = 0; node < state->nodeCount; ++node)
       {
          unsigned player = state->controlledByInitial[node];
-         if (player != -1)
+         if (player != UINT_MAX)
          {
-            betterCount = 0;
-            getConnectedNodes(state, node, connected, &connectedCount);
-            for (unsigned i = 0; i < connectedCount; ++i)
+            unsigned longestDistance = 0;
+            unsigned bestNode = UINT_MAX;
+            for (unsigned otherNode = 0; otherNode < state->nodeCount; ++otherNode)
             {
-               unsigned candidate = connected[i];
-               if (!bordersToEnemy(state, candidate, player) &&
-                   state->controlledByInitial[candidate] == -1)
+               unsigned otherPlayer = state->controlledByInitial[otherNode];
+               if (otherPlayer == UINT_MAX)
                {
-                  better[betterCount++] = candidate;
+                  unsigned distance = distanceToClosestEnemy(state, otherNode);
+                  if (distance > longestDistance)
+                  {
+                     longestDistance = distance;
+                     bestNode = otherNode;
+                  }
                }
             }
 
-            if (betterCount)
+            // If there's a better node (farther from enemies) move the player there
+            if (bestNode != UINT_MAX)
             {
-               unsigned selectedBetterNode = better[rand() % betterCount];
-               state->controlledByInitial[node] = -1;
-               state->controlledByInitial[selectedBetterNode] = player;
-               movement = 1;
+               state->controlledByInitial[node] = UINT_MAX;
+               state->controlledByInitial[bestNode] = player;
             }
          }
       }
