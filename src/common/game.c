@@ -350,7 +350,7 @@ void startGame(struct GameState* state)
    {
       state->nodeSpacePositions[node].x = ((float) (rand() % 1000) - 500.0) / 500.0;
       state->nodeSpacePositions[node].y = ((float) (rand() % 1000) - 500.0) / 500.0;
-      state->nodeSpacePositions[node].z = 0.1 * ((float) (rand() % 1000) - 500.0) / 500.0; // Keep the galaxy flat-ish. If it's too "deep" it gets confusing.
+      state->nodeSpacePositions[node].z = ((float) (rand() % 1000) - 500.0) / 500.0;
       state->nodeSpacePositions[node].w = 1.0;
 
       state->controlledByInitial[node] = -1;
