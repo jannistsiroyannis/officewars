@@ -2,25 +2,47 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <stdint.h>
 
 #include "turnresolution.h"
 #include "game.h"
 
-static unsigned countSupporters(struct GameState* game, struct Turn* turn, unsigned node, unsigned* pinned)
+// This needs an explanation. Because the turn resolution _must_ be guaranteed to
+// play out _exactly_ the same way every time on every platfrom for any given
+// set of inputs, floating point math won't work. If the WASM runtime is for
+// example compiled with --ffast-math on one machine, but with IEEE 754 floats on
+// another, the results could differ, which could (in theory) lead to two players
+// incorrectly "seeing" different outcomes of a battle, which breaks the game.
+// For this reason we need fixed point arithmetic when counting node strengths.
+#define FIXED_SHIFT 16
+#define FIXED_MASK 0x0000FFFF
+typedef uint32_t fixed_real;
+
+static fixed_real calculateStrengthInternal(struct GameState* game, struct Turn* turn, unsigned node, unsigned* pinned, unsigned* visited)
 {
-   // How many connected fleets are ordered to support the fleet at node ?
-   unsigned supporters = 0;
+   fixed_real strength = 1 << FIXED_SHIFT;
    for (unsigned order = 0; order < turn->orderCount; ++order)
    {
       if (turn->toNode[order] == node &&
 	  turn->type[order] == SUPPORTORDER &&
 	  nodesConnect(game, node, turn->fromNode[order]) &&
-	  !pinned[turn->fromNode[order]])
+	  !pinned[turn->fromNode[order]] &&
+          !visited[turn->fromNode[order]])
       {
-         ++supporters;
+         // 'turn->fromNode[order]' supports 'node' and is not pinned
+         visited[turn->fromNode[order]] = 1;
+         strength += calculateStrengthInternal(game, turn, turn->fromNode[order], pinned, visited) / 2;
       }
    }
-   return supporters;
+   return strength;
+}
+
+static fixed_real calculateStrength(struct GameState* game, struct Turn* turn, unsigned node, unsigned* pinned)
+{
+   unsigned visited[game->nodeCount];
+   memset(visited, 0, sizeof(visited[0]) * game->nodeCount);
+   visited[node] = 1; // Can't support yourself
+   return calculateStrengthInternal(game, turn, node, pinned, visited);
 }
 
 static int existsControlledPathToInt(struct GameState* game, unsigned from, unsigned to, unsigned playerId, unsigned* visited)
@@ -72,15 +94,14 @@ static int resolveTurn(struct GameState* game, unsigned turnIndex)
    }
 
    // calculate all defensive strengths
-   unsigned defensiveStrength[game->nodeCount];
+   fixed_real defensiveStrength[game->nodeCount];
    memset(defensiveStrength, 0, sizeof(defensiveStrength[0]) * game->nodeCount);
    for (unsigned node = 0; node < game->nodeCount; ++node)
-   {  
-      unsigned initialDefenceStrength = 1;
-      if (game->controlledBy[node] == -1)
-         initialDefenceStrength = 0;
-      
-      defensiveStrength[node] = initialDefenceStrength + countSupporters(game, turn, node, pinned);  
+   {
+      if (game->controlledBy[node] != -1)
+         defensiveStrength[node] = calculateStrength(game, turn, node, pinned);
+      else
+         defensiveStrength[node] = 0; // Neutral nodes have no strength
    }
 
    // Battles
@@ -89,7 +110,7 @@ static int resolveTurn(struct GameState* game, unsigned turnIndex)
       // Find the strongest attacking force
       unsigned strongestAttackingPlayer = -1;
       unsigned strongestAttackingCandidate = -1;
-      unsigned candidateStrength = 0;
+      fixed_real candidateStrength = 0;
       for (unsigned order = 0; order < turn->orderCount; ++order)
       {
          if (turn->toNode[order] == node &&
@@ -97,7 +118,7 @@ static int resolveTurn(struct GameState* game, unsigned turnIndex)
              nodesConnect(game, node, turn->fromNode[order]))
          {
             // Judge strength of attack
-            unsigned strength = 1 + countSupporters(game, turn, turn->fromNode[order], pinned);
+            fixed_real strength = calculateStrength(game, turn, turn->fromNode[order], pinned);
             if (strength > candidateStrength) // a new strongest attacker
             {
                strongestAttackingPlayer = turn->issuingPlayer[order];
