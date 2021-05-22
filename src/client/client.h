@@ -11,6 +11,7 @@ struct ClientGame
    struct GameState state; // the actual game state, replicated from server
    Vec3* nodeScreenPositions; // 2d screen pixel positions of nodes (calculated per frame)
    unsigned* edgeBuffer; // a static buffer for passing edge-lists into JS-land without malloc
+   float* supportBuffer; // a static buffer, where support strengths for the current turn are kept (for rendering)
    
    // view
    Vec3 viewFocus;

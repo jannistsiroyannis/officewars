@@ -9,4 +9,6 @@ void stepGameHistory(struct GameState* game, unsigned targetStep);
 
 void stepGameHistoryLatest(struct GameState* game);
 
+void calculateDisplayStrengths(struct GameState* game, unsigned turnIndex, float* strength);
+
 #endif

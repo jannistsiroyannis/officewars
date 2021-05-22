@@ -39,6 +39,9 @@ static fixed_real calculateStrengthInternal(struct GameState* game, struct Turn*
 
 static fixed_real calculateStrength(struct GameState* game, struct Turn* turn, unsigned node, unsigned* pinned)
 {
+   if (game->controlledBy[node] == -1)
+      return 0; // Neutral nodes have no strength
+
    unsigned visited[game->nodeCount];
    memset(visited, 0, sizeof(visited[0]) * game->nodeCount);
    visited[node] = 1; // Can't support yourself
@@ -75,13 +78,8 @@ static int existsControlledPathTo(struct GameState* game, unsigned from, unsigne
    return existsControlledPathToInt(game, from, to, playerId, visited);
 }
 
-static int resolveTurn(struct GameState* game, unsigned turnIndex)
+static void findPinnedWorlds(struct GameState* game, struct Turn* turn, unsigned* pinned)
 {
-   struct Turn* turn = &game->turn[turnIndex];
-   int gameStateWasChanged = 0;
-
-   // Pinning
-   unsigned pinned[game->nodeCount];
    memset(pinned, 0, sizeof(pinned[0]) * game->nodeCount);
    for (unsigned order = 0; order < turn->orderCount; ++order)
    {
@@ -92,16 +90,23 @@ static int resolveTurn(struct GameState* game, unsigned turnIndex)
          pinned[turn->toNode[order]] = 1;
       }
    }
+}
 
-   // calculate all defensive strengths
-   fixed_real defensiveStrength[game->nodeCount];
-   memset(defensiveStrength, 0, sizeof(defensiveStrength[0]) * game->nodeCount);
+static int resolveTurn(struct GameState* game, unsigned turnIndex)
+{
+   struct Turn* turn = &game->turn[turnIndex];
+   int gameStateWasChanged = 0;
+
+   // Pinning
+   unsigned pinned[game->nodeCount];
+   findPinnedWorlds(game, turn, pinned);
+   
+   // calculate all node strengths
+   fixed_real nodeStrength[game->nodeCount];
+   memset(nodeStrength, 0, sizeof(nodeStrength[0]) * game->nodeCount);
    for (unsigned node = 0; node < game->nodeCount; ++node)
    {
-      if (game->controlledBy[node] != -1)
-         defensiveStrength[node] = calculateStrength(game, turn, node, pinned);
-      else
-         defensiveStrength[node] = 0; // Neutral nodes have no strength
+      nodeStrength[node] = calculateStrength(game, turn, node, pinned);
    }
 
    // Battles
@@ -118,7 +123,7 @@ static int resolveTurn(struct GameState* game, unsigned turnIndex)
              nodesConnect(game, node, turn->fromNode[order]))
          {
             // Judge strength of attack
-            fixed_real strength = calculateStrength(game, turn, turn->fromNode[order], pinned);
+            fixed_real strength = nodeStrength[turn->fromNode[order]];
             if (strength > candidateStrength) // a new strongest attacker
             {
                strongestAttackingPlayer = turn->issuingPlayer[order];
@@ -135,7 +140,7 @@ static int resolveTurn(struct GameState* game, unsigned turnIndex)
       }
 
       // If one attacker is stronger than all other attackers and stronger than the defence, the attacker wins
-      if (strongestAttackingCandidate != -1 && candidateStrength > defensiveStrength[node])
+      if (strongestAttackingCandidate != -1 && candidateStrength > nodeStrength[node])
       {
          game->controlledBy[node] = strongestAttackingPlayer;
          gameStateWasChanged = 1;
@@ -242,4 +247,20 @@ void stepGameHistoryLatest(struct GameState* game)
 {
    unsigned targetStep = game->turnCount > 0 ? game->turnCount-1 : 0;
    stepGameHistory(game, targetStep);
+}
+
+void calculateDisplayStrengths(struct GameState* game, unsigned turnIndex, float* strength)
+{
+   struct Turn* turn = &game->turn[turnIndex];
+
+   unsigned pinned[game->nodeCount];
+   findPinnedWorlds(game, turn, pinned);
+
+   for (unsigned node = 0; node < game->nodeCount; ++node)
+   {
+      fixed_real fixedStrength = calculateStrength(game, turn, node, pinned);
+      float floatStrength = (fixedStrength >> FIXED_SHIFT) +
+         ( (float)(fixedStrength & FIXED_MASK) / (float)FIXED_MASK) ;
+      strength[node] = floatStrength;
+   }
 }

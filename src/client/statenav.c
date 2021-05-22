@@ -172,6 +172,7 @@ void receiveState(const char* data, unsigned size)
          freeGameState(&clientState.state);
          free(clientState.nodeScreenPositions);
          free(clientState.edgeBuffer);
+         free(clientState.supportBuffer);
       }
    
       clientState.state = deserialize(f);
@@ -182,6 +183,9 @@ void receiveState(const char* data, unsigned size)
 
       clientState.edgeBuffer = malloc(sizeof(*(clientState.edgeBuffer)) *
                                       clientState.state.nodeCount);
+
+      clientState.supportBuffer = malloc(sizeof(*(clientState.supportBuffer)) *
+                                         clientState.state.nodeCount);
    
       fclose(f);
    }
@@ -263,6 +267,7 @@ void receiveState(const char* data, unsigned size)
    }
 
    clientState.viewingTurn = clientState.state.turnCount-1;
+   calculateDisplayStrengths(&clientState.state, clientState.viewingTurn, clientState.supportBuffer);
 
    // If you are a player of this game, start out focusing your own home world
    // If you're receiving state, but were already looking at the game, do not change focus!
@@ -313,6 +318,7 @@ void receiveButtonClick(char* value)
          }, clientState.state.turnCount-1);
 
       stepGameHistory(&clientState.state, clientState.viewingTurn);
+      calculateDisplayStrengths(&clientState.state, clientState.viewingTurn, clientState.supportBuffer);
    }
    else if (!strncmp(value, "historyp", strlen("historyp")))
    {
@@ -328,6 +334,7 @@ void receiveButtonClick(char* value)
          });
 
       stepGameHistory(&clientState.state, clientState.viewingTurn);
+      calculateDisplayStrengths(&clientState.state, clientState.viewingTurn, clientState.supportBuffer);
    }
    else if (!strncmp(value, "historyl", strlen("historyl")))
    {
@@ -339,6 +346,7 @@ void receiveButtonClick(char* value)
          }, clientState.state.turnCount-1);
 
       stepGameHistory(&clientState.state, clientState.viewingTurn);
+      calculateDisplayStrengths(&clientState.state, clientState.viewingTurn, clientState.supportBuffer);
    }
    else if (!strncmp(value, "setsecret ", strlen("setsecret ")))
    {

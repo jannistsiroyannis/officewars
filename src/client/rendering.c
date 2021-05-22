@@ -72,7 +72,7 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	 var canvas = document.getElementById("canv");
 	 var context = canvas.getContext("2d");   
 	 var nodes = Module.HEAPF32.subarray($1/4, $1/4 + $0*3); // Float-array, xyz interleaved
-	 //var occupied = Module.HEAPU32.subarray($3/4, $3/4 + $0);
+	 var strength = Module.HEAPF32.subarray($3/4, $3/4 + $0);
 	 var controlledBy = Module.HEAPU32.subarray($4/4, $4/4 + $0);
 	 //var homeWorld = Module.HEAPU32.subarray($9/4, $9/4 + $0);
 
@@ -160,14 +160,18 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	       context.stroke();
 	    }
 	    
-	    // Draw occupying colors and fleet markers
+	    // Draw occupying colors and names
 	    if (controlledBy[node] != 4294967295) // 32bit -1 unsigned negative overflow :P
 	    {
 	       var controllingName = UTF8ToString(playerNames[controlledBy[node]]);
 	       var controllingColor = UTF8ToString(playerColors[controlledBy[node]]); 
 	       context.strokeStyle = controllingColor;
 	       context.fillStyle = controllingColor;
-               context.fillText("(" + node + ") " + controllingName, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+5+perspectiveRadius);
+               context.fillText("(" + node + ") " + controllingName, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+perspectiveRadius);
+               if (strength[node] != 1.0)
+               {
+                  context.fillText("strength: " + strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+12+perspectiveRadius);
+               }
 	       context.fillStyle = controllingColor;
 	    }
 	    else
@@ -250,7 +254,7 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
       nodeCount, // $0
       (float*) transformed, // $1
       clientState.edgeBuffer, // $2
-      0, //clientState.state.occupied, // $3
+      clientState.supportBuffer, // $3
       clientState.state.controlledBy, // $4
       nodeFocus, // $5
       clientState.state.playerCount, // $6
