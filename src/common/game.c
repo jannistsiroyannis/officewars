@@ -8,7 +8,7 @@
 #include "game.h"
 
 static const unsigned MAXCONNECTIONS = 4;
-static const unsigned MINCONNECTIONS = 3;
+static const unsigned MINCONNECTIONS = 2;
 static const unsigned NODESPERPLAYER = 7;
 
 static void disconnectNodes(struct GameState* state, unsigned a, unsigned b)

@@ -170,7 +170,7 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
                context.fillText("(" + node + ") " + controllingName, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+perspectiveRadius);
                if (strength[node] != 1.0)
                {
-                  context.fillText("strength: " + strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+12+perspectiveRadius);
+                  context.fillText("+ " + ((strength[node]-1.0)*2.0).toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
                }
 	       context.fillStyle = controllingColor;
 	    }
