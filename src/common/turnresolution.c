@@ -189,51 +189,31 @@ void stepGameHistory(struct GameState* game, unsigned targetStep)
    
    unsigned steps = targetStep > game->turnCount-1 ? game->turnCount-1 : targetStep;
 
-   int gameStateWasChanged;
    for (unsigned i = 0; i < steps; ++i)
    {
-      gameStateWasChanged = resolveTurn(game, i);
+      resolveTurn(game, i);
    }
 
    // Test the game state for a winner
-   if (!gameStateWasChanged)
+   unsigned winningPlayer = UINT_MAX;
+   for (unsigned node = 0; node < game->nodeCount; ++node)
    {
-      unsigned nodesPerPlayer[game->playerCount];
-      memset(nodesPerPlayer, 0, sizeof(nodesPerPlayer[0]) * game->playerCount);
-      for (unsigned node = 0; node < game->nodeCount; ++node)
+      if (game->controlledBy[node] != UINT_MAX && game->controlledBy[node] != winningPlayer)
       {
-         if (game->controlledBy[node] != UINT_MAX)
-         {
-            nodesPerPlayer[game->controlledBy[node]]++;
-         }
-      }
-
-      unsigned remainingPlayers = 0;
-      unsigned highestNodeCount = 0;
-      unsigned winningPlayer = UINT_MAX;
-      for (unsigned player = 0; player < game->playerCount; ++player)
-      {
-         if (nodesPerPlayer[player])
-            ++remainingPlayers;
-
-         if (nodesPerPlayer[player] == highestNodeCount)
+         if (winningPlayer != UINT_MAX) // More than 1 player remaining.
          {
             winningPlayer = UINT_MAX;
+            break;
          }
-         else if (nodesPerPlayer[player] > highestNodeCount)
-         {
-            highestNodeCount = nodesPerPlayer[player];
-            winningPlayer = player;
-         }
+         else 
+            winningPlayer = game->controlledBy[node];
       }
-
-      if (remainingPlayers < 3)
-      {
-         // There are now 1 or 2 players remaining, and the game is "locked" (no node changed owner)
-         // This means the game is over.
-         game->metaGameState = POSTGAME;
-         game->winningPlayer = winningPlayer;
-      }
+   }
+   if (winningPlayer != UINT_MAX)
+   {
+      // "There can be only one!"
+      game->metaGameState = POSTGAME;
+      game->winningPlayer = winningPlayer;
    }
 }
 
