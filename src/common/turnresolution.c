@@ -148,26 +148,20 @@ static int resolveTurn(struct GameState* game, unsigned turnIndex)
    }
 
    // Surrenders
-   unsigned allSurrendersDone;
-   do
+   for (unsigned order = 0; order < turn->orderCount; ++order)
    {
-      allSurrendersDone = 1;
-      for (unsigned order = 0; order < turn->orderCount; ++order)
+      if (turn->type[order] == SURRENDERORDER)
       {
-         if (turn->type[order] == SURRENDERORDER)
+         for (unsigned node = 0; node < game->nodeCount; ++node)
          {
-            for (unsigned node = 0; node < game->nodeCount; ++node)
+            if (game->controlledBy[node] == turn->issuingPlayer[order])
             {
-               if (game->controlledBy[node] == turn->issuingPlayer[order])
-               {
-                  game->controlledBy[node] = turn->toNode[order]; // toNode doubles as "to player" if the order type is SURRENDERORDER
-                  allSurrendersDone = 0;
-               }
+               game->controlledBy[node] = UINT_MAX; 
             }
          }
       }
-   } while (!allSurrendersDone);
-
+   }
+   
    return gameStateWasChanged;
 }
 

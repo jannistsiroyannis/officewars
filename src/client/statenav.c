@@ -205,42 +205,28 @@ void receiveState(const char* data, unsigned size)
 
       // Find pre-existing surrenderorders, if any
       struct Turn* turn = & game->turn[game->turnCount-1];
-      unsigned surrenderingTo = UINT_MAX; // = not surrendering
+      unsigned surrendering = 0;
       for (unsigned order = 0; order < turn->orderCount; ++order)
       {
          if ( turn->issuingPlayer[order] == playerId && turn->type[order] == SURRENDERORDER )
          {
-            surrenderingTo = turn->toNode[order];
+            surrendering = 1;
          }
       }
 
       // Generate surrender-to html
-      unsigned nodesPerPlayer[game->playerCount];
-      memset(nodesPerPlayer, 0, sizeof(nodesPerPlayer[0]) * game->playerCount);
-      for (unsigned node = 0; node < game->nodeCount; ++node)
-      {
-         if (game->controlledBy[node] != UINT_MAX)
-         {
-            nodesPerPlayer[game->controlledBy[node]]++;
-         }
-      }
-      char surrenderOptionsBuf[512*game->playerCount];
+      char surrenderOptionsBuf[512];
       unsigned pos = 0;
       pos += sprintf(surrenderOptionsBuf + pos, "<select onchange=\"_receiveButtonClick(allocate(intArrayFromString('surrender '+this.value), ALLOC_NORMAL))\">");
-      if (surrenderingTo == UINT_MAX)
-         pos += sprintf(surrenderOptionsBuf + pos, "<option selected=\"selected\" value=\"-1\">Not surrendering</option>");
-      else
-         pos += sprintf(surrenderOptionsBuf + pos, "<option value=\"-1\">Not surrendering</option>");
-      for (unsigned player = 0; player < game->playerCount; ++player)
+      if (!surrendering)
       {
-         // Surviving players that aren't me
-         if (nodesPerPlayer[player] > 0 && strcmp(game->playerSecret[player], playerSecret))
-         {
-            if (surrenderingTo == player)
-               pos += sprintf(surrenderOptionsBuf + pos, "<option value=\"%d\" selected=\"selected\">Surrender to %s</option>", player, game->playerName[player]);
-            else
-               pos += sprintf(surrenderOptionsBuf + pos, "<option value=\"%d\">Surrender to %s</option>", player, game->playerName[player]);
-         }
+         pos += sprintf(surrenderOptionsBuf + pos, "<option selected=\"selected\" value=\"0\">I got this!</option>");
+         pos += sprintf(surrenderOptionsBuf + pos, "<option value=\"1\">I surrender after this round.</option>");
+      }
+      else
+      {
+         pos += sprintf(surrenderOptionsBuf + pos, "<option value=\"0\">I got this!</option>");
+         pos += sprintf(surrenderOptionsBuf + pos, "<option selected=\"selected\" value=\"1\">I surrender after this round.</option>");
       }
       pos += sprintf(surrenderOptionsBuf + pos, "/<select>");
       free(playerSecret);
@@ -357,8 +343,8 @@ void receiveButtonClick(char* value)
    }
    else if (!strncmp(value, "surrender ", strlen("surrender ")))
    {
-      int surrenderTo = strtol(value + strlen("surrender "), NULL, 10);
-      sendOrder(SURRENDERORDER, UINT_MAX, surrenderTo);
+      int surrender = strtol(value + strlen("surrender "), NULL, 10);
+      sendOrder(SURRENDERORDER, UINT_MAX, surrender);
    }
 
    free(value);

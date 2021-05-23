@@ -506,7 +506,7 @@ void addPlayer(struct GameState* game, const char* name, char* color, const char
    strcpy(game->playerSecret[game->playerCount-1], playerSecret);
 }
 
-static void addSurrenderOrder(struct GameState* game, unsigned toPlayerId, unsigned surrenderingPlayerId)
+static void addSurrenderOrder(struct GameState* game, unsigned surrender, unsigned surrenderingPlayerId)
 {
    struct Turn* turn = &(game->turn[game->turnCount-1]);
    
@@ -525,7 +525,7 @@ static void addSurrenderOrder(struct GameState* game, unsigned toPlayerId, unsig
       }
    }
 
-   if (toPlayerId != UINT_MAX)
+   if (surrender)
    {
       // resize orders arrays
       turn->issuingPlayer = realloc(turn->issuingPlayer, (turn->orderCount+1) * sizeof(turn->issuingPlayer[0]));
@@ -536,7 +536,7 @@ static void addSurrenderOrder(struct GameState* game, unsigned toPlayerId, unsig
       // Add the new orders at the end
       turn->issuingPlayer[turn->orderCount] = surrenderingPlayerId;
       turn->fromNode[turn->orderCount] = UINT_MAX;
-      turn->toNode[turn->orderCount] = toPlayerId;
+      turn->toNode[turn->orderCount] = UINT_MAX;
       turn->type[turn->orderCount] = SURRENDERORDER;
       turn->orderCount++;
    }
