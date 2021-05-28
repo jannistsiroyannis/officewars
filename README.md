@@ -14,7 +14,7 @@ You will also require the Emscripten tool chain, in order to compile the
 client web assembly (Only tested using version 2.0.13).
 
 In order to host the game locally, it's also practical (but not necessary)
-to have Python (3) installed, as it contains a convenient GCI-compliant web
+to have Python (3) installed, as it contains a convenient CGI-compliant web
 server.
 
 # Building and running locally
@@ -25,8 +25,8 @@ gcc
 emcc
 python3
 
-If they are: you should be able to run the run.sh script, which will build
-the game and start it in the temporary webserver.
+If they are: you should be able to run the build.sh script, which will build
+the game and run.sh to start it in the temporary webserver.
 
 To deploy "for production", any CGI-compliant web server should do
 (only tested using Apache2).
@@ -35,7 +35,9 @@ created upon execution of build.sh
 
 # Using docker
 
-To simplify building and running you may use Docker and Docker Compose. There are two containers. One is for building the binary and one is for running the server.
+To simplify building and running you may use Docker and Docker Compose.
+There are two containers. One is for building the binary and one is for
+running the server.
 
 First build the server and client:
 ```
