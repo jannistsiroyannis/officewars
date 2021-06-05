@@ -13,5 +13,7 @@ enum StateTarget
 
 void gotoState(enum StateTarget target, const char* parameter);
 void receiveState(const char* data, unsigned size);
+void refreshScoreboardIfNecessary();
+void showScoreboard();
 
 #endif
