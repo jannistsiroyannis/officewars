@@ -362,7 +362,7 @@ void refreshScoreboardIfNecessary()
 {
    int scoreboardIsVisible = EM_ASM_INT(
       {
-         return document.getElementById('scoreboard') != null ? 1 : -1;
+         return document.getElementById('scoreboard') != null ? 1 : 0;
       });
 
    if (scoreboardIsVisible)
