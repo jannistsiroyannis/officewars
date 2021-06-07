@@ -158,6 +158,100 @@ static int playerIsAuthed()
    return 0;
 }
 
+static void showScoreboard()
+{
+   EM_ASM(
+      {
+         if (document.getElementById('scoreboard'))
+         {
+            document.getElementById('scoreboard').remove();
+         }
+
+         const controlledBy = Module.HEAPU32.subarray($1/4, $1/4 + $0);
+         const playerCount = $2;
+         const playerNames = Module.HEAPU32.subarray($3/4, $3/4 + $2);
+         const playerColors = Module.HEAPU32.subarray($4/4, $4/4 + $2);
+         let scoreboard = [];
+
+         for (let player = 0; player < playerCount; ++player)
+         {
+            let name = UTF8ToString(playerNames[player]);
+            let color = UTF8ToString(playerColors[player]);
+
+            scoreboard[player] = {};
+            scoreboard[player].name = name;
+            scoreboard[player].color = color;
+            scoreboard[player].nodes = 0;
+         }
+
+         let neutralCount = 0;
+         for (let node = 0; node < $0; ++node)
+         {
+            if (controlledBy[node] != 4294967295)
+            {
+               scoreboard[controlledBy[node]].nodes += 1
+            }
+            else
+            {
+               neutralCount++;
+            }
+         }
+
+         scoreboard.sort((a, b) => b.nodes - a.nodes);
+
+         let scoreHtml = `
+            <div id="scoreboard">
+               <p>Total nodes: ${$0}<br>Neutral: ${neutralCount}</p>
+               <ul>
+         `;
+
+         for (const player of scoreboard)
+         {
+            const block = document.createElement('span');
+            block.innerHTML = '&#x2588; ';
+            block.style.color = player.color;
+
+            const text = document.createElement('span');
+            text.innerText = `${player.name}: ${player.nodes}`;
+
+            const li = document.createElement('li');
+            li.appendChild(block);
+            li.appendChild(text);
+            scoreHtml += li.outerHTML;
+         }
+
+         scoreHtml += `
+            </ul>
+            <button id="scoreboard-close" type="button">Close</button>
+            </div>
+         `;
+         document.body.insertAdjacentHTML('afterBegin', scoreHtml);
+
+         document.getElementById('scoreboard-close').addEventListener('click', function() {
+            document.getElementById('scoreboard').remove();
+         });
+      },
+      clientState.state.nodeCount, // $0
+      clientState.state.controlledBy, // $1
+      clientState.state.playerCount, // $2
+      clientState.state.playerName, // $3
+      clientState.state.playerColor // $4
+   );
+}
+
+static void refreshScoreboardIfNecessary()
+{
+   int scoreboardIsVisible = EM_ASM_INT(
+      {
+         return document.getElementById('scoreboard') != null ? 1 : 0;
+      });
+
+   if (scoreboardIsVisible)
+   {
+      showScoreboard();
+   }
+}
+
 void receiveState(const char* data, unsigned size)
 {
    // Deserialize game state
@@ -264,6 +358,8 @@ void receiveState(const char* data, unsigned size)
    }
 
    clientState.viewIsActive = 1;
+
+   refreshScoreboardIfNecessary();
 }
 
 
@@ -356,100 +452,6 @@ void receiveButtonClick(char* value)
    }
 
    free(value);
-}
-
-void refreshScoreboardIfNecessary()
-{
-   int scoreboardIsVisible = EM_ASM_INT(
-      {
-         return document.getElementById('scoreboard') != null ? 1 : 0;
-      });
-
-   if (scoreboardIsVisible)
-   {
-      showScoreboard();
-   }
-}
-
-void showScoreboard()
-{
-   EM_ASM(
-      {
-         if (document.getElementById('scoreboard'))
-         {
-            document.getElementById('scoreboard').remove();
-         }
-
-         const controlledBy = Module.HEAPU32.subarray($1/4, $1/4 + $0);
-         const playerCount = $2;
-         const playerNames = Module.HEAPU32.subarray($3/4, $3/4 + $2);
-         const playerColors = Module.HEAPU32.subarray($4/4, $4/4 + $2);
-         let scoreboard = [];
-
-         for (let player = 0; player < playerCount; ++player)
-         {
-            let name = UTF8ToString(playerNames[player]);
-            let color = UTF8ToString(playerColors[player]);
-
-            scoreboard[player] = {};
-            scoreboard[player].name = name;
-            scoreboard[player].color = color;
-            scoreboard[player].nodes = 0;
-         }
-
-         let neutralCount = 0;
-         for (let node = 0; node < $0; ++node)
-         {
-            if (controlledBy[node] != 4294967295)
-            {
-               scoreboard[controlledBy[node]].nodes += 1
-            }
-            else
-            {
-               neutralCount++;
-            }
-         }
-
-         scoreboard.sort((a, b) => b.nodes - a.nodes);
-
-         let scoreHtml = `
-            <div id="scoreboard">
-               <p>Total nodes: ${$0}<br>Neutral: ${neutralCount}</p>
-               <ul>
-         `;
-
-         for (const player of scoreboard)
-         {
-            const block = document.createElement('span');
-            block.innerHTML = '&#x2588; ';
-            block.style.color = player.color;
-
-            const text = document.createElement('span');
-            text.innerText = `${player.name}: ${player.nodes}`;
-
-            const li = document.createElement('li');
-            li.appendChild(block);
-            li.appendChild(text);
-            scoreHtml += li.outerHTML;
-         }
-
-         scoreHtml += `
-            </ul>
-            <button id="scoreboard-close" type="button">Close</button>
-            </div>
-         `;
-         document.body.insertAdjacentHTML('afterBegin', scoreHtml);
-
-         document.getElementById('scoreboard-close').addEventListener('click', function() {
-            document.getElementById('scoreboard').remove();
-         });
-      },
-      clientState.state.nodeCount, // $0
-      clientState.state.controlledBy, // $1
-      clientState.state.playerCount, // $2
-      clientState.state.playerName, // $3
-      clientState.state.playerColor // $4
-   );
 }
 
 void gotoState(enum StateTarget target, const char* parameter)
