@@ -72,7 +72,7 @@ body {
     color: var(--input-fg);
 }
 
-.control button, .control select {
+.control button, .control select, #scoreboard button {
     border: solid 1px var(--input-border);
     background-color: var(--input-bg);
     color: var(--input-fg);
@@ -81,7 +81,7 @@ body {
     padding: 5px 10px;
 }
 
-.control button:hover, .control select:hover {
+.control button:hover, .control select:hover, #scoreboard button:hover {
     background-color: var(--input-bg-over);
 }
 
