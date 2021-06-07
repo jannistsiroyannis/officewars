@@ -72,7 +72,7 @@ body {
     color: var(--input-fg);
 }
 
-.control button, .control select {
+.control button, .control select, #scoreboard button {
     border: solid 1px var(--input-border);
     background-color: var(--input-bg);
     color: var(--input-fg);
@@ -81,7 +81,7 @@ body {
     padding: 5px 10px;
 }
 
-.control button:hover, .control select:hover {
+.control button:hover, .control select:hover, #scoreboard button:hover {
     background-color: var(--input-bg-over);
 }
 
@@ -163,6 +163,32 @@ body {
 
 #contribute > a:hover {
     background-color: var(--entry-bg-over);
+}
+
+#scoreboard {
+   z-index: 9999;
+   position: absolute;
+   left: 0;
+   right: 0;
+   top: 40%;
+   margin-left: auto;
+   margin-right: auto;
+   width: 400px;
+
+   padding: 10px;
+
+   border: 1px solid var(--control-border);
+   background-color: var(--control-bg);
+   color: var(--control-fg);
+}
+
+#scoreboard p {
+    margin-top: 0;
+}
+
+#scoreboard ul {
+    list-style-type: none;
+    padding: 0;
 }
 
 .hidden {
