@@ -576,10 +576,10 @@ void addOrder(struct GameState* game, enum OrderType type, unsigned from, unsign
        
    struct Turn* turn = &(game->turn[game->turnCount-1]);
 
-   // Remove any other orders from that same node
+   // An overlapping order
    for (unsigned i = 0; i < turn->orderCount; ++i)
    {
-      if (turn->fromNode[i] == from)
+      if (turn->fromNode[i] == from && turn->toNode[i] == to)
       {
          unsigned remaining = turn->orderCount - i - 1;
          memmove(&(turn->issuingPlayer[i]), &(turn->issuingPlayer[i+1]), remaining * sizeof(turn->issuingPlayer[0]));
@@ -587,8 +587,27 @@ void addOrder(struct GameState* game, enum OrderType type, unsigned from, unsign
          memmove(&(turn->toNode[i]), &(turn->toNode[i+1]), remaining * sizeof(turn->toNode[0]));
          memmove(&(turn->type[i]), &(turn->type[i+1]), remaining * sizeof(turn->type[0]));
          --(turn->orderCount);
-         break;
+         --i;
       }
+   }
+
+   // An order from N to N means to clear all orders from the node.
+   if (from == to)
+   {
+      for (unsigned i = 0; i < turn->orderCount; ++i)
+      {
+         if (turn->fromNode[i] == from)
+         {
+            unsigned remaining = turn->orderCount - i - 1;
+            memmove(&(turn->issuingPlayer[i]), &(turn->issuingPlayer[i+1]), remaining * sizeof(turn->issuingPlayer[0]));
+            memmove(&(turn->fromNode[i]), &(turn->fromNode[i+1]), remaining * sizeof(turn->fromNode[0]));
+            memmove(&(turn->toNode[i]), &(turn->toNode[i+1]), remaining * sizeof(turn->toNode[0]));
+            memmove(&(turn->type[i]), &(turn->type[i+1]), remaining * sizeof(turn->type[0]));
+            --(turn->orderCount);
+            --i;
+         }
+      }
+      return;
    }
 
    // resize orders arrays

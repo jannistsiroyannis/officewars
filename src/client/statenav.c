@@ -267,6 +267,7 @@ void receiveState(const char* data, unsigned size)
          free(clientState.nodeScreenPositions);
          free(clientState.edgeBuffer);
          free(clientState.supportBuffer);
+         free(clientState.orderCountBuffer);
       }
    
       clientState.state = deserialize(f);
@@ -280,6 +281,9 @@ void receiveState(const char* data, unsigned size)
 
       clientState.supportBuffer = malloc(sizeof(*(clientState.supportBuffer)) *
                                          clientState.state.nodeCount);
+
+      clientState.orderCountBuffer = malloc(sizeof(*(clientState.orderCountBuffer)) *
+                                            clientState.state.nodeCount);
    
       fclose(f);
    }
@@ -348,7 +352,8 @@ void receiveState(const char* data, unsigned size)
    }
 
    clientState.viewingTurn = clientState.state.turnCount-1;
-   calculateDisplayStrengths(&clientState.state, clientState.viewingTurn, clientState.supportBuffer);
+   calculateDisplayStrengths(&clientState.state, clientState.viewingTurn,
+                             clientState.supportBuffer, clientState.orderCountBuffer);
 
    // If you are a player of this game, start out focusing your own home world
    // If you're receiving state, but were already looking at the game, do not change focus!
@@ -401,7 +406,8 @@ void receiveButtonClick(char* value)
          }, clientState.state.turnCount-1);
 
       stepGameHistory(&clientState.state, clientState.viewingTurn);
-      calculateDisplayStrengths(&clientState.state, clientState.viewingTurn, clientState.supportBuffer);
+      calculateDisplayStrengths(&clientState.state, clientState.viewingTurn,
+                                clientState.supportBuffer, clientState.orderCountBuffer);
       refreshScoreboardIfNecessary();
    }
    else if (!strncmp(value, "historyp", strlen("historyp")))
@@ -418,7 +424,8 @@ void receiveButtonClick(char* value)
          });
 
       stepGameHistory(&clientState.state, clientState.viewingTurn);
-      calculateDisplayStrengths(&clientState.state, clientState.viewingTurn, clientState.supportBuffer);
+      calculateDisplayStrengths(&clientState.state, clientState.viewingTurn,
+                                clientState.supportBuffer, clientState.orderCountBuffer);
       refreshScoreboardIfNecessary();
    }
    else if (!strncmp(value, "historyl", strlen("historyl")))
@@ -431,7 +438,8 @@ void receiveButtonClick(char* value)
          }, clientState.state.turnCount-1);
 
       stepGameHistory(&clientState.state, clientState.viewingTurn);
-      calculateDisplayStrengths(&clientState.state, clientState.viewingTurn, clientState.supportBuffer);
+      calculateDisplayStrengths(&clientState.state, clientState.viewingTurn,
+                                clientState.supportBuffer, clientState.orderCountBuffer);
       refreshScoreboardIfNecessary();
    }
    else if (!strncmp(value, "setsecret ", strlen("setsecret ")))

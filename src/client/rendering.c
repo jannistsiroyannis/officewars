@@ -73,6 +73,7 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	 var context = canvas.getContext("2d");   
 	 var nodes = Module.HEAPF32.subarray($1/4, $1/4 + $0*3); // Float-array, xyz interleaved
 	 var strength = Module.HEAPF32.subarray($3/4, $3/4 + $0);
+         var orderCount = Module.HEAPU32.subarray($9/4, $9/4 + $0);
 	 var controlledBy = Module.HEAPU32.subarray($4/4, $4/4 + $0);
 	 //var homeWorld = Module.HEAPU32.subarray($9/4, $9/4 + $0);
 
@@ -136,18 +137,7 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 
 	    var perspectiveRadius = 5.0 / (z1 / 10000.0);
 
-            /*
-	    context.fillStyle = "black";
-	    if (node >= starNames.length)
-	    {
-	       context.fillText("Alien_"+node, nodes[node*3+0]+4+perspectiveRadius, nodes[node*3+1]+4+perspectiveRadius);
-	    }
-	    else
-	    {
-	       context.fillText(starNames[node], nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]-5-perspectiveRadius);
-               }*/
-
-	    if (node == $5) // View focus
+            if (node == $5) // View focus
 	    {
 	       context.beginPath();
 	       context.lineWidth = "4";
@@ -170,7 +160,14 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
                context.fillText("(" + node + ") " + controllingName, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+perspectiveRadius);
                if (strength[node] != 1.0)
                {
-                  context.fillText("+ " + ((strength[node]-1.0)*2.0).toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
+                  if (orderCount[node] > 1)
+                  {
+                     context.fillText("+ " + orderCount[node] + " * " + strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
+                  }
+                  else
+                  {
+                     context.fillText("+ " + strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
+                  }
                }
 	       context.fillStyle = controllingColor;
 	    }
@@ -260,7 +257,7 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
       clientState.state.playerCount, // $6
       clientState.state.playerName, // $7
       clientState.state.playerColor, // $8
-      0, //clientState.state.homeWorld, // $9
+      clientState.orderCountBuffer, // $9
       clientState.state.turn[clientState.viewingTurn].orderCount, // $10
       clientState.state.turn[clientState.viewingTurn].issuingPlayer, // $11
       clientState.state.turn[clientState.viewingTurn].fromNode, // $12

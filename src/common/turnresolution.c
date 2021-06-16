@@ -34,13 +34,24 @@ static fixed_real calculateStrengthInternal(struct GameState* game, struct Turn*
          strength += calculateStrengthInternal(game, turn, turn->fromNode[order], pinned, visited) / 2;
       }
    }
+
+   // How many total orders from that same node?
+   unsigned splitOrderCount = 0;
+   for (unsigned order = 0; order < turn->orderCount; ++order)
+   {
+      if (turn->fromNode[order] == node)
+         ++splitOrderCount;
+   }
+
+   if (splitOrderCount)
+      return strength / splitOrderCount;
    return strength;
 }
 
 static fixed_real calculateStrength(struct GameState* game, struct Turn* turn, unsigned node, unsigned* pinned)
 {
    if (game->controlledBy[node] == -1)
-      return 0; // Neutral nodes have no strength
+      return (1 << FIXED_SHIFT) / 2; // Neutral nodes have a set strength, and cannot receive support
 
    unsigned visited[game->nodeCount];
    memset(visited, 0, sizeof(visited[0]) * game->nodeCount);
@@ -140,10 +151,31 @@ static int resolveTurn(struct GameState* game, unsigned turnIndex)
       }
 
       // If one attacker is stronger than all other attackers and stronger than the defence, the attacker wins
-      if (strongestAttackingCandidate != -1 && candidateStrength > nodeStrength[node])
       {
-         game->controlledBy[node] = strongestAttackingPlayer;
-         gameStateWasChanged = 1;
+         // How many total orders from that same node? Because splitting a nodes power only affects
+         // it's offence and support, _not_ it's defence.
+         unsigned splitOrderCount = 0;
+         for (unsigned order = 0; order < turn->orderCount; ++order)
+         {
+            if (turn->fromNode[order] == node)
+               ++splitOrderCount;
+         }
+
+         // This is _super_ tricky! Saying "candidateStrength > splitOrderCount * nodeStrength[node]" would
+         // make a lot more sense to a human reader, BUT we're dealing with finite precision real numbers now,
+         // which means ((A / n) * n) might in fact _not_ be equal to A (due to truncation errors). So,
+         // in order to not let what should be a draw, turn into somebody randomly winning, it's better
+         // that both the attackers strength and the defenders are divided by the same number, rather
+         // than trying to multiply the defensive strength back up to what it originally was.
+         fixed_real candidateStrengthScaled = candidateStrength;
+         if (splitOrderCount)
+            candidateStrengthScaled = candidateStrength/splitOrderCount;
+         
+         if (strongestAttackingCandidate != -1 && candidateStrengthScaled > nodeStrength[node])
+         {
+            game->controlledBy[node] = strongestAttackingPlayer;
+            gameStateWasChanged = 1;
+         }
       }
    }
 
@@ -223,18 +255,28 @@ void stepGameHistoryLatest(struct GameState* game)
    stepGameHistory(game, targetStep);
 }
 
-void calculateDisplayStrengths(struct GameState* game, unsigned turnIndex, float* strength)
+void calculateDisplayStrengths(struct GameState* game, unsigned turnIndex, float* strength, unsigned* orderCount)
 {
    struct Turn* turn = &game->turn[turnIndex];
 
    unsigned pinned[game->nodeCount];
    findPinnedWorlds(game, turn, pinned);
 
+   // What's the (offensive) strength of each node
    for (unsigned node = 0; node < game->nodeCount; ++node)
    {
       fixed_real fixedStrength = calculateStrength(game, turn, node, pinned);
       float floatStrength = (fixedStrength >> FIXED_SHIFT) +
          ( (float)(fixedStrength & FIXED_MASK) / (float)FIXED_MASK) ;
       strength[node] = floatStrength;
+
+      // How many total orders from that same node?
+      unsigned splitOrderCount = 0;
+      for (unsigned order = 0; order < turn->orderCount; ++order)
+      {
+         if (turn->fromNode[order] == node)
+            ++splitOrderCount;
+      }
+      orderCount[node] = splitOrderCount;
    }
 }
