@@ -219,6 +219,22 @@ void sendOrder(enum OrderType type, unsigned from, unsigned to)
    }
 }
 
+void calculateExtendedDisplayNodes()
+{
+   // fill clientState.extendedDisplayBuffer with ones
+   // for nodes needing extended info, otherwise zero.
+
+   for (unsigned i = 0; i < clientState.state.nodeCount; ++i)
+   {
+      if ( i == clientState.nodeFocus || nodesConnect(&clientState.state, clientState.nodeFocus, i) )
+      {
+         clientState.extendedDisplayBuffer[i] = 1;
+      }
+      else
+         clientState.extendedDisplayBuffer[i] = 0;
+   }
+}
+
 EM_BOOL mouseUp(int eventType, const EmscriptenMouseEvent* mouseEvent, void* userData)
 {
    if (!mouseState.dragging || mouseState.dragDist < 4) // not dragging = a left click
@@ -229,6 +245,8 @@ EM_BOOL mouseUp(int eventType, const EmscriptenMouseEvent* mouseEvent, void* use
       if (mouseEvent->button == 0) // left button
       {
 	 clientState.nodeFocus = selectedNode;
+         calculateExtendedDisplayNodes();
+         
       } else if (mouseEvent->button == 2) // right button
       {
          enum OrderType type = ATTACKORDER;

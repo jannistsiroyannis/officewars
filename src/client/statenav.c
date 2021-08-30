@@ -268,6 +268,7 @@ void receiveState(const char* data, unsigned size)
          free(clientState.edgeBuffer);
          free(clientState.supportBuffer);
          free(clientState.orderCountBuffer);
+         free(clientState.extendedDisplayBuffer);
       }
    
       clientState.state = deserialize(f);
@@ -284,6 +285,9 @@ void receiveState(const char* data, unsigned size)
 
       clientState.orderCountBuffer = malloc(sizeof(*(clientState.orderCountBuffer)) *
                                             clientState.state.nodeCount);
+
+      clientState.extendedDisplayBuffer = malloc(sizeof(*(clientState.extendedDisplayBuffer)) *
+                                                 clientState.state.nodeCount);
    
       fclose(f);
    }
@@ -363,6 +367,7 @@ void receiveState(const char* data, unsigned size)
    }
 
    clientState.viewIsActive = 1;
+   calculateExtendedDisplayNodes();
 
    refreshScoreboardIfNecessary();
 }

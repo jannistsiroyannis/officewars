@@ -75,8 +75,8 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	 var strength = Module.HEAPF32.subarray($3/4, $3/4 + $0);
          var orderCount = Module.HEAPU32.subarray($9/4, $9/4 + $0);
 	 var controlledBy = Module.HEAPU32.subarray($4/4, $4/4 + $0);
-	 //var homeWorld = Module.HEAPU32.subarray($9/4, $9/4 + $0);
-
+         var extendedInfo = Module.HEAPU32.subarray($16/4, $16/4 + $0);
+	 
 	 var playerCount = $6;
 	 var playerNames = Module.HEAPU32.subarray($7/4, $7/4 + $6); // array of player name char*
 	 var playerColors = Module.HEAPU32.subarray($8/4, $8/4 + $6); // array of player color char*
@@ -164,15 +164,17 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	       context.fillStyle = "black";
                context.fillText(node, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+perspectiveRadius);
 	    }
-            if (orderCount[node] > 1)
+            if (extendedInfo[node] == 1)
             {
-               context.fillText(orderCount[node] + " * " + strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
+               if (orderCount[node] > 1)
+               {
+                  context.fillText(orderCount[node] + " * " + strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
+               }
+               else
+               {
+                  context.fillText(strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
+               }
             }
-            else
-            {
-               context.fillText(strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
-            }
-            
 
 	    // Draw the node itself
 	    context.beginPath();
@@ -260,7 +262,8 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
       clientState.state.turn[clientState.viewingTurn].fromNode, // $12
       clientState.state.turn[clientState.viewingTurn].toNode, // $13
       clientState.state.turn[clientState.viewingTurn].type, // $14
-      dashOffset // $15
+      dashOffset, // $15
+      clientState.extendedDisplayBuffer // $16
    );
 
 }

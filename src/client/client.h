@@ -13,6 +13,7 @@ struct ClientGame
    unsigned* edgeBuffer; // a static buffer for passing edge-lists into JS-land without malloc
    float* supportBuffer; // a static buffer, where support strengths for the current turn are kept (for rendering)
    unsigned* orderCountBuffer; // a static buffer, where order counts for the current turn are kept (for rendering)
+   unsigned* extendedDisplayBuffer; // a static buffer, value 1 for nodes where extended information should be displayed, otherwise zeo.
    
    // view
    Vec3 viewFocus;
@@ -41,5 +42,7 @@ char* getCookie(const char* key); // EM_JS(char*, getCookie, (const char* key)
 void setCookie(const char* key, const char* value); // EM_JS(void, setCookie, (const char* key, const char* value)
 
 void sendOrder(enum OrderType type, unsigned from, unsigned to);
+
+void calculateExtendedDisplayNodes();
 
 #endif
