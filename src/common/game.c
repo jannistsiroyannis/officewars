@@ -9,7 +9,7 @@
 
 static const unsigned MAXCONNECTIONS = 4;
 static const unsigned MINCONNECTIONS = 2;
-static const unsigned NODESPERPLAYER = 7;
+static const unsigned NODESPERPLAYER = 6;
 
 static void disconnectNodes(struct GameState* state, unsigned a, unsigned b)
 {
