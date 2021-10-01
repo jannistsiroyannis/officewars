@@ -203,17 +203,24 @@ void tickGame(struct GameState* game)
       return;
 
    unsigned movedPlayers[game->playerCount];
+   unsigned hasNodes[game->playerCount];
    memset(movedPlayers, 0, game->playerCount * sizeof(movedPlayers[0]));
+   memset(hasNodes, 0, game->playerCount * sizeof(hasNodes[0]));
    struct Turn* currentTurn = &game->turn[game->turnCount-1];
    for (unsigned order = 0; order < currentTurn->orderCount; ++order)
    {
       unsigned playerId = currentTurn->issuingPlayer[order];
       movedPlayers[playerId] = 1;
    }
+   for (unsigned node = 0; node < game->nodeCount; ++node)
+   {
+      unsigned playerId = game->controlledBy[node];
+      hasNodes[playerId] = 1;
+   }
    unsigned everyoneMoved = 1;
    for (unsigned i = 0; i < game->playerCount; ++i)
    {
-      if (!movedPlayers[i])
+      if (!movedPlayers[i] && hasNodes[i])
       {
          everyoneMoved = 0;
          fprintf(stderr, "Did not move: %s\n", game->playerName[i]);
