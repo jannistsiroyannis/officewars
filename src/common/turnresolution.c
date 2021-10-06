@@ -215,7 +215,8 @@ void tickGame(struct GameState* game)
    for (unsigned node = 0; node < game->nodeCount; ++node)
    {
       unsigned playerId = game->controlledBy[node];
-      hasNodes[playerId] = 1;
+      if (playerId != UINT_MAX)
+         hasNodes[playerId] = 1;
    }
    unsigned everyoneMoved = 1;
    for (unsigned i = 0; i < game->playerCount; ++i)

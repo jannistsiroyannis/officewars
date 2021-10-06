@@ -126,6 +126,7 @@ static void tickAllGames()
          if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
          {
             struct GameState game = loadGame(dir->d_name);
+            stepGameHistoryLatest(&game);
             tickGame(&game);
             saveAndCloseGame(&game, dir->d_name);
          }
@@ -257,6 +258,7 @@ int main (int argc, char** argv)
    if (argc == 3 && !strcmp(argv[1], "tick"))
    {
       struct GameState game = loadGame(argv[2]);
+      stepGameHistoryLatest(&game);
       tickGame(&game);
       saveAndCloseGame(&game, argv[2]);
       return 0;
