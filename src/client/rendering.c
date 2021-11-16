@@ -88,6 +88,8 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	 var playerCount = $6;
 	 var playerNames = Module.HEAPU32.subarray($7/4, $7/4 + $6); // array of player name char*
 	 var playerColors = Module.HEAPU32.subarray($8/4, $8/4 + $6); // array of player color char*
+
+         var alreadyDisplayedNames = new Set();
 	 
 	 context.beginPath();
 	 context.clearRect(0, 0, canvas.width, canvas.height);
@@ -161,11 +163,19 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	    // Draw occupying colors and names
 	    if (controlledBy[node] != 4294967295) // 32bit -1 unsigned negative overflow :P
 	    {
-	       var controllingName = UTF8ToString(playerNames[controlledBy[node]]);
-	       var controllingColor = UTF8ToString(playerColors[controlledBy[node]]); 
-	       context.strokeStyle = controllingColor;
-	       context.fillStyle = controllingColor;
-               context.fillText(node + " " + controllingName, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+perspectiveRadius);
+               var controllingName = UTF8ToString(playerNames[controlledBy[node]]);
+               var controllingColor = UTF8ToString(playerColors[controlledBy[node]]); 
+               context.strokeStyle = controllingColor;
+               context.fillStyle = controllingColor;
+               if (!alreadyDisplayedNames.has(controlledBy[node]))
+               {
+                  context.fillText(node + " " + controllingName, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+perspectiveRadius);
+                  alreadyDisplayedNames.add(controlledBy[node]);
+               }
+               else
+               {
+                  context.fillText(node, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+perspectiveRadius);
+               }
             }
 	    else
 	    {
