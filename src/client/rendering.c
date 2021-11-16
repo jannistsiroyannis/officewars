@@ -67,6 +67,15 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
       transformed[i] = viewportTransform(p, screenWidth, screenHeight, NEAR_CLIP_Z, FAR_CLIP_Z);
    }
 
+   // Necessary because emscripten only supports passing a maximum of 15 arguments to EM_ASM
+   EM_ASM(
+      {
+         globalThis.extendedInfo = Module.HEAPU32.subarray($1/4, $1/4 + $0);
+      },
+      nodeCount, // $0
+      clientState.extendedDisplayBuffer // $1
+      );
+
    EM_ASM(
       {
 	 var canvas = document.getElementById("canv");
@@ -75,7 +84,6 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	 var strength = Module.HEAPF32.subarray($3/4, $3/4 + $0);
          var orderCount = Module.HEAPU32.subarray($9/4, $9/4 + $0);
 	 var controlledBy = Module.HEAPU32.subarray($4/4, $4/4 + $0);
-	 //var homeWorld = Module.HEAPU32.subarray($9/4, $9/4 + $0);
 
 	 var playerCount = $6;
 	 var playerNames = Module.HEAPU32.subarray($7/4, $7/4 + $6); // array of player name char*
@@ -164,15 +172,17 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
 	       context.fillStyle = "black";
                context.fillText(node, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+perspectiveRadius);
 	    }
-            if (orderCount[node] > 1)
+            if (globalThis.extendedInfo[node] == 1)
             {
-               context.fillText(orderCount[node] + " * " + strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
+               if (orderCount[node] > 1)
+               {
+                  context.fillText(orderCount[node] + " * " + strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
+               }
+               else
+               {
+                  context.fillText(strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
+               }
             }
-            else
-            {
-               context.fillText(strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
-            }
-            
 
 	    // Draw the node itself
 	    context.beginPath();
