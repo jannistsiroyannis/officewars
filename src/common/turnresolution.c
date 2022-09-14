@@ -202,36 +202,6 @@ void tickGame(struct GameState* game)
    if (game->metaGameState != INGAME)
       return;
 
-   unsigned movedPlayers[game->playerCount];
-   unsigned hasNodes[game->playerCount];
-   memset(movedPlayers, 0, game->playerCount * sizeof(movedPlayers[0]));
-   memset(hasNodes, 0, game->playerCount * sizeof(hasNodes[0]));
-   struct Turn* currentTurn = &game->turn[game->turnCount-1];
-   for (unsigned order = 0; order < currentTurn->orderCount; ++order)
-   {
-      unsigned playerId = currentTurn->issuingPlayer[order];
-      movedPlayers[playerId] = 1;
-   }
-   for (unsigned node = 0; node < game->nodeCount; ++node)
-   {
-      unsigned playerId = game->controlledBy[node];
-      if (playerId != UINT_MAX)
-         hasNodes[playerId] = 1;
-   }
-   unsigned everyoneMoved = 1;
-   for (unsigned i = 0; i < game->playerCount; ++i)
-   {
-      if (!movedPlayers[i] && hasNodes[i])
-      {
-         everyoneMoved = 0;
-         fprintf(stderr, "Did not move: %s\n", game->playerName[i]);
-      }
-   }
-   
-   if (!everyoneMoved)
-      return;
-
-   fprintf(stderr, "All players checked in, now ticking to turn: %u!\n", game->turnCount);
    // Add a new turn, implicitly finalizing the current one
    game->turnCount++;
    game->turn = realloc(game->turn, game->turnCount * sizeof(game->turn[0]));

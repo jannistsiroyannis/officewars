@@ -176,10 +176,37 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
                {
                   context.fillText(node, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+perspectiveRadius);
                }
+
+	       // Draw "clock arm colors", based on names.
+	       context.beginPath();
+	       context.lineWidth = "3";
+	       var hash = 0;
+	       for (i = 0; i < controllingName.length; i++) {
+		  hash = ((hash << 5) - hash) + controllingName.charCodeAt(i);
+		  hash |= 0;
+	       }
+	       context.translate(nodes[node*3+0], nodes[node*3+1]);
+	       
+	       context.rotate(hash / 100);
+	       context.moveTo(0,0);
+	       context.lineTo(5+perspectiveRadius+(hash%6), 0);
+	       
+	       context.rotate(hash / -200);
+	       context.moveTo(0,0);
+	       context.lineTo(5+perspectiveRadius+((hash-10)%5), 0);
+
+	       context.rotate(hash / 300);
+	       context.moveTo(0,0);
+	       context.lineTo(5+perspectiveRadius+((hash-20)%4), 0);
+	       
+	       context.stroke();
+	       context.resetTransform();
+	    
             }
 	    else
 	    {
 	       context.fillStyle = "black";
+	       context.strokeStyle = "black";
                context.fillText(node, nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+perspectiveRadius);
 	    }
             if (globalThis.extendedInfo[node] == 1)
@@ -193,12 +220,6 @@ void renderGraph(unsigned nodeFocus, float viewEulerX, float viewEulerY,
                   context.fillText(strength[node].toFixed(2), nodes[node*3+0]+5+perspectiveRadius, nodes[node*3+1]+14+perspectiveRadius);
                }
             }
-
-	    // Draw the node itself
-	    context.beginPath();
-	    context.arc(nodes[node*3+0], nodes[node*3+1], perspectiveRadius, 0, 2*Math.PI);
-	    context.closePath();
-	    context.fill();
 	 }
 
 	 var orderCount = $10;
