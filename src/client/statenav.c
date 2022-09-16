@@ -540,9 +540,9 @@ Please confirm game start. Once the game has started, new players will no longer
             }
 	 
             controlArea.innerHTML = "\
-<div class=\"info\">Enter a name for your galactic empire and choose a color for your banner. Do NOT use a name that can identify you as a person.</div>\
+<div class=\"info\">Please enter the nickname you'd like to use. This will be visible to the other players.</div>\
 <div class=\"config\">\
-<input type=\"text\" id=\"playerName\" placeholder=\"Solar republic\" name=\"name\"/><label for=\"playerName\">Name of your empire</label>\
+<input type=\"text\" id=\"playerName\" placeholder=\"Destroyer of lesser colleagues\" name=\"name\"/><label for=\"playerName\">Nickname</label>\
 <input type=\"color\" id=\"playerColor\" name=\"color\" value=\""+colorPreset+"\"/><label for=\"playerColor\">Color</label>\
 </div>\
 <div class=\"footer\">\
