@@ -135,6 +135,41 @@ static void tickAllGames()
    }
 }
 
+static void listInactivePlayers()
+{
+   DIR *d;
+   struct dirent *dir;
+   d = opendir(".");
+   if (d)
+   {
+      while ((dir = readdir(d)) != NULL)
+      {
+         if (strncmp(dir->d_name, ".", 1) && strncmp(dir->d_name, "..", 2)) // ignore . and ..
+         {
+            struct GameState game = loadGame(dir->d_name);
+
+	    if (game.metaGameState == INGAME)
+	    {
+	       struct Turn* turn = &(game.turn[game.turnCount-1]);
+	       for (unsigned player = 0; player < game.playerCount; ++player)
+	       {
+		  unsigned hasPlacedOrder = 0;
+		  for (unsigned order = 0; order < turn->orderCount; ++order)
+		  {
+		     if (turn->issuingPlayer[order] == player)
+			hasPlacedOrder = 1;
+		  }
+	       
+		  if (!hasPlacedOrder)
+		     printf("(%.6s) Player: \"%s\" has not yet placed any orders this turn.\n", game.id, game.playerName[player]);
+	       }
+	    }
+         }
+      }
+      closedir(d);
+   }
+}
+
 static void startAllGames()
 {
    DIR *d;
@@ -275,6 +310,12 @@ int main (int argc, char** argv)
    if (argc == 3 && !strcmp(argv[1], "create"))
    {
       createNewGameFile(argv[2]);
+      return 0;
+   }
+
+   if (argc == 2 && !strcmp(argv[1], "inactive"))
+   {
+      listInactivePlayers();
       return 0;
    }
 
