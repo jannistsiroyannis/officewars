@@ -225,26 +225,24 @@ void stepGameHistory(struct GameState* game, unsigned targetStep)
       resolveTurn(game, i);
    }
 
-   // Test the game state for a winner
-   unsigned winningPlayer = UINT_MAX;
-   for (unsigned node = 0; node < game->nodeCount; ++node)
+   // Test the game state for a winner. > 50% of nodes to win.
+   unsigned neededToWin = game->nodeCount / 2 + 1;
+   for (unsigned player = 0; player < game->playerCount; ++player)
    {
-      if (game->controlledBy[node] != UINT_MAX && game->controlledBy[node] != winningPlayer)
+      unsigned controlledByPlayer = 0;
+      for (unsigned node = 0; node < game->nodeCount; ++node)
       {
-         if (winningPlayer != UINT_MAX) // More than 1 player remaining.
-         {
-            winningPlayer = UINT_MAX;
-            break;
-         }
-         else 
-            winningPlayer = game->controlledBy[node];
+	 if (game->controlledBy[node] == player)
+	 {
+	    ++controlledByPlayer;
+	 }
+	 if (controlledByPlayer >= neededToWin)
+	 {
+	    // Game over.
+	    game->metaGameState = POSTGAME;
+	    game->winningPlayer = player;
+	 }
       }
-   }
-   if (winningPlayer != UINT_MAX)
-   {
-      // "There can be only one!"
-      game->metaGameState = POSTGAME;
-      game->winningPlayer = winningPlayer;
    }
 }
 
